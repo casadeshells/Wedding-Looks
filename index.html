@@ -179,6 +179,9 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .toast.on{opacity:1}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
+/* Account */
+.acct{margin-top:6px;font-size:11px;color:var(--muted);word-break:break-all}
+.acct button{background:none;border:0;padding:0;font-size:11px;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 /* Presence */
 .presence{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.4}
 .presence i{flex:0 0 7px;height:7px;border-radius:50%;background:var(--line);margin-top:5px}
@@ -311,7 +314,7 @@ function renderSide(){
   const items=CH.map(c=>`<li><button data-nav="${c.id}" style="--c:${c.color}" aria-current="${S.active===c.id}"><span class="dot"></span><span>${c.name}</span><span class="sum">${byChapter(c.id).length||''}</span></button></li>`).join('');
   $('#nav').innerHTML=`<li><button data-nav="overview" style="--c:var(--gold)" aria-current="${S.active==='overview'}"><span class="dot"></span><span>Overview</span><span class="sum"></span></button></li>`+items+`<li class="sep" aria-hidden="true"></li><li><button data-nav="summary" style="--c:var(--ink)" aria-current="${S.active==='summary'}"><span class="dot"></span><span>Cost summary</span><span class="sum"></span></button></li>`;
   const foot=`<div class="grand-label">Total for all looks</div><div class="grand">${money(grandTotal())}</div>
-    ${presenceHTML()}${syncChip()}<button class="btn small" data-pdf style="margin-top:8px">Export PDF</button>
+    ${presenceHTML()}${syncChip()}${acctHTML()}<button class="btn small" data-pdf style="margin-top:8px">Export PDF</button>
     <label class="cur">Currency <select id="curSel" ${S.canWrite?'':'disabled'}>${Object.entries(CURS).map(([k,v])=>`<option value="${k}" ${k===S.currency?'selected':''}>${v}</option>`).join('')}</select></label>`;
   const mobile=matchMedia('(max-width:860px)').matches;
   $('#sideFoot').innerHTML=mobile?'':foot;
@@ -489,7 +492,8 @@ document.addEventListener('click',e=>{
   if('share' in d){shareWith(t);return}
   if('copyLink' in d){copyLink();return}
   if('gateSave' in d){const v=$('#cidIn').value.trim();if(!/\.apps\.googleusercontent\.com$/.test(v)){toast('That does not look like a Client ID.');return}localStorage.setItem('wl-cid',v);gate();return}
-  if('gateSignin' in d){signIn();return}
+  if('gateSignin' in d){signIn(true);return}
+  if('switchAcct' in d){switchAccount();return}
   if('gateCreate' in d){createLookbook(t);return}
   if('gateRetry' in d){connect();return}
   if('gateLocal' in d){hideGate();return}
@@ -554,7 +558,7 @@ addEventListener('paste',e=>{const f=[...(e.clipboardData?.files||[])];if(f.leng
 matchMedia('(max-width:860px)').addEventListener('change',renderSide);
 
 /* ---------- Google Drive sync ---------- */
-const CLIENT_ID=''; // Optional: paste your Google OAuth Client ID between the quotes
+const CLIENT_ID='301416357487-82gd46cdqei7obk20p3ln3bmtcamnpdk.apps.googleusercontent.com'; // Optional: paste your Google OAuth Client ID between the quotes
 const SCOPE='https://www.googleapis.com/auth/drive';
 const FOLDER_NAME='Bako & Made Wedding Looks',DATA_NAME='looks-data.json';
 const API='https://www.googleapis.com/drive/v3',UP='https://www.googleapis.com/upload/drive/v3';
@@ -674,7 +678,7 @@ function presBody(){const l=S.open&&S.looks.get(S.open);return {name:me?me.displ
 async function initPresence(){
   if(presId||!folderId||!tokenOk())return;
   try{
-    me=(await jget(`${API}/about?fields=user(displayName,emailAddress)`)).user;
+    me=(await jget(`${API}/about?fields=user(displayName,emailAddress)`)).user;localStorage.setItem('wl-email',me.emailAddress);renderSide();
     const name=`presence-${slugify(me.emailAddress)}.json`;
     const r=await jget(`${API}/files?q=${qs(`'${folderId}' in parents and name='${name}' and trashed=false`)}&fields=files(id)`);
     presId=r.files&&r.files[0]?r.files[0].id:await createFile({name,parents:[folderId],mimeType:'application/json'},new Blob([JSON.stringify(presBody())],{type:'application/json'}));
@@ -701,6 +705,12 @@ async function readPresence(){
     S.peers=peers;renderSide();updatePeerNote();
   }catch{}
 }
+function acctHTML(){const e=localStorage.getItem('wl-email');return `<div class="acct">${e?esc(e)+'<br>':''}<button data-switch-acct>${e?'Switch account':'Choose account'}</button></div>`}
+function switchAccount(){
+  token=null;tokenExp=0;presId=null;me=null;people=null;S.peers=[];folderId=dataId=null;
+  ['wl-token','wl-folder','wl-data','wl-email'].forEach(k=>localStorage.removeItem(k));
+  clearTimeout(pollT);setSync('signin');render();signIn(true);
+}
 function presenceHTML(){
   return (S.peers||[]).map(p=>{const n=esc(firstName(p.body));
     if(p.online){const where=p.body.look?`, editing “${esc(p.body.look)}”`:(pageName(p.body.page)?`, on ${esc(pageName(p.body.page))}`:'');return `<div class="presence on"><i></i><span>${n} is here now${where}</span></div>`}
@@ -717,7 +727,7 @@ addEventListener('online',()=>{if(tokenOk())syncNow()});
 /* Sign-in */
 let gisReady=null;
 function loadGIS(){if(gisReady)return gisReady;gisReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=res;sc.onerror=()=>{gisReady=null;rej()};document.head.appendChild(sc)});return gisReady}
-async function signIn(){
+async function signIn(choose){
   if(!clientId()){gate();return}
   try{await loadGIS()}catch{toast('Could not reach Google. Check your connection.');return}
   if(!tokenClient)tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId(),scope:SCOPE,callback:resp=>{
@@ -726,7 +736,8 @@ async function signIn(){
     localStorage.setItem('wl-token',JSON.stringify({token,exp:tokenExp}));localStorage.setItem('wl-signed','1');
     connect();
   }});
-  tokenClient.requestAccessToken({prompt:localStorage.getItem('wl-signed')?'':'consent'});
+  const hint=localStorage.getItem('wl-email')||'';
+  tokenClient.requestAccessToken(choose||!hint?{prompt:'select_account'}:{prompt:'',hint});
 }
 async function connect(){
   setSync('connecting');
