@@ -1048,11 +1048,14 @@ let pdfLib=null;
 function loadPdfLib(){if(pdfLib)return pdfLib;pdfLib=new Promise((res,rej)=>{if(window.jspdf)return res(window.jspdf);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';sc.onload=()=>res(window.jspdf);sc.onerror=()=>{pdfLib=null;rej(new Error('load'))};document.head.appendChild(sc)});return pdfLib}
 const pm=n=>S.currency+' '+Math.round(n).toLocaleString('en-US');
 const rgb=h=>{const m=h.replace('#','');return [parseInt(m.slice(0,2),16),parseInt(m.slice(2,4),16),parseInt(m.slice(4,6),16)]};
-async function imgData(id){
+// mode 'full': whole picture, natural shape. mode 'square': centered square crop for thumbnails.
+async function imgData(id,mode='full'){
   try{const u=await ensureImg(id);if(!u)return null;const b=await (await fetch(u)).blob();const bmp=await createImageBitmap(b);
-    const W=640,H=800,cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
-    const s=Math.max(W/bmp.width,H/bmp.height),w=bmp.width*s,h=bmp.height*s;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.drawImage(bmp,(W-w)/2,(H-h)/2,w,h);
-    return cv.toDataURL('image/jpeg',.82)}catch{return null}
+    const cv=document.createElement('canvas');const ctx=cv.getContext('2d');
+    if(mode==='square'){const S2=400;cv.width=cv.height=S2;const sc=Math.max(S2/bmp.width,S2/bmp.height),w=bmp.width*sc,h=bmp.height*sc;ctx.drawImage(bmp,(S2-w)/2,(S2-h)/2,w,h);return {data:cv.toDataURL('image/jpeg',.82),w:1,h:1}}
+    const sc=Math.min(1,1200/Math.max(bmp.width,bmp.height));cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(bmp,0,0,cv.width,cv.height);
+    return {data:cv.toDataURL('image/jpeg',.85),w:cv.width,h:cv.height}}catch{return null}
 }
 async function exportPDF(btn){
   if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent='Preparing…';
@@ -1078,17 +1081,19 @@ async function exportPDF(btn){
       const cm=S.chapters[c.id];T(fmtDate(cm.date)||'Date not set',M,41,{size:10});
       let top=48;(cm.palette||[]).forEach((p,i)=>{const cx=M+i*14;try{doc.setFillColor(...rgb(p.hex));doc.rect(cx,46,11,11,'F')}catch{}});if((cm.palette||[]).length)top=64;let col=[top,top];
       for(const l of looks){
-        const imgH=CW*1.05;
+        const im=l.images&&l.images[0]?await imgData(l.images[0]):null;
+        const maxH=CW*1.4;let dw=CW,dh=CW*1.05;
+        if(im){dw=CW;dh=CW*im.h/im.w;if(dh>maxH){dh=maxH;dw=maxH*im.w/im.h}}
+        const imgH=dh;
         const fl=FIELDS.filter(([k])=>l[k]).map(([k,lab])=>doc.splitTextToSize(lab+': '+l[k],CW));
         const cl=(l.costs||[]).filter(r=>num(r.amount));
-        const h=imgH+12+((l.images||[]).length>1?(CW-6)/4*1.25+6:0)+((l.colors||[]).length?6:0)+fl.reduce((a,x)=>a+x.length*4,0)+cl.length*4.5+12;
+        const h=imgH+12+((l.images||[]).length>1?(CW-6)/4+6:0)+((l.colors||[]).length?6:0)+fl.reduce((a,x)=>a+x.length*4,0)+cl.length*4.5+12;
         let ci=col[0]<=col[1]?0:1;
         if(col[ci]+h>PH-M){if(col[1-ci]+h<=PH-M)ci=1-ci;else{doc.addPage();doc.setFillColor(...rgb(c.color));doc.rect(0,0,PW,4,'F');col=[M+4,M+4];ci=0}}
         const x=M+ci*(CW+GAP);let yy=col[ci];
-        const im=l.images&&l.images[0]?await imgData(l.images[0]):null;
-        if(im)doc.addImage(im,'JPEG',x,yy,CW,imgH);else{doc.setFillColor(240,237,238);doc.rect(x,yy,CW,imgH,'F')}
+        if(im){if(dw<CW){doc.setFillColor(244,241,242);doc.rect(x,yy,CW,dh,'F')}doc.addImage(im.data,'JPEG',x+(CW-dw)/2,yy,dw,dh)}else{doc.setFillColor(240,237,238);doc.rect(x,yy,CW,imgH,'F')}
         const extra=(l.images||[]).slice(1,5);
-        if(extra.length){yy+=imgH+2;const tw=(CW-6)/4;for(let i=0;i<extra.length;i++){const d=await imgData(extra[i]);const tx2=x+i*(tw+2);if(d)doc.addImage(d,'JPEG',tx2,yy,tw,tw*1.25);const tg=tagOf(l,extra[i]);if(tg)T(tg,tx2+tw/2,yy+tw*1.25+3.5,{size:7,color:mut,align:'center'})}yy+=tw*1.25+6-imgH-2}
+        if(extra.length){yy+=imgH+2;const tw=(CW-6)/4;for(let i=0;i<extra.length;i++){const d=await imgData(extra[i],'square');const tx2=x+i*(tw+2);if(d)doc.addImage(d.data,'JPEG',tx2,yy,tw,tw);const tg=tagOf(l,extra[i]);if(tg)T(doc.splitTextToSize(tg,tw+1)[0],tx2+tw/2,yy+tw+3.5,{size:6.5,color:mut,align:'center'})}yy+=tw+6-imgH-2}
         yy+=imgH+6;T(doc.splitTextToSize(l.title||'Untitled look',CW-28)[0],x,yy,{font:'times',size:14});T([l.who,l.status||'Idea'].filter(Boolean).join(', '),x+CW,yy,{size:8,color:mut,align:'right'});yy+=5;
         if((l.colors||[]).length){(l.colors).forEach((s,i)=>{try{doc.setFillColor(...rgb(s));doc.circle(x+2+i*6,yy,2,'F')}catch{}});yy+=6}
         doc.setFontSize(8.5);fl.forEach(ls=>{T(ls,x,yy+1,{size:8.5});yy+=ls.length*4});
