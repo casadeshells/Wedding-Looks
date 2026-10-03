@@ -288,7 +288,10 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .sync[data-st="signin"],.sync[data-st="error"]{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .sync[data-st="signin"]::before,.sync[data-st="error"]::before{background:#B4413C}
 .share-msg{font-size:14px;margin:0 0 10px;min-height:1em}
-.people{list-style:none;padding:0;margin:0 0 12px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.people{list-style:none;padding:0;margin:0 0 14px;font-size:14px;display:flex;flex-direction:column;max-width:520px}
+.people li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.people li span:first-child{word-break:break-all}
+.people .role{color:var(--muted);font-size:13px;white-space:nowrap}
 .share-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
 .share-row .in{max-width:300px}
 .gate{position:fixed;inset:0;z-index:90;background:var(--paper);display:none;place-items:center;padding:24px}
@@ -664,11 +667,11 @@ document.addEventListener('click',e=>{
   if('gateRetry' in d){connect();return}
   if('gateLocal' in d){hideGate();return}
   if('menu' in d){toggleMenu();return}
-  if(d.nav){toggleMenu(false);S.active=d.nav;closeDrawer();document.activeElement&&document.activeElement.blur&&document.activeElement.blur();render();window.scrollTo({top:0});sendPresence(true);return}
+  if(d.nav){toggleMenu(false);setPage(d.nav,true);closeDrawer();document.activeElement&&document.activeElement.blur&&document.activeElement.blur();render();window.scrollTo({top:0});sendPresence(true);return}
   if('addPics' in d){pendingTarget=null;$('#file').click();return}
   if(d.addTo){pendingTarget=d.addTo;$('#file').click();return}
   if('addBlank' in d){const id=newLook(S.active);render();openDrawer(id,true);return}
-  if(d.open){if(d.goto)S.active=d.goto,render();openDrawer(d.open);return}
+  if(d.open){if(d.goto){setPage(d.goto,true);render()}openDrawer(d.open);return}
   if('close' in d){const wasNew=DR&&DR.isNew,wasDirty=DR&&DR.dirty;closeDrawer();if(wasDirty||wasNew)toast('Saved');return}
   if('cancel' in d){cancelDrawer();return}
   if(d.palAdd){const k=d.palAdd;if((metaObj(k).palette||[]).length>=12){toast('Up to 12 colors per palette.');return}
@@ -729,7 +732,7 @@ const SCOPE='https://www.googleapis.com/auth/drive';
 const FOLDER_NAME='Bako & Made Wedding Looks',DATA_NAME='looks-data.json';
 const API='https://www.googleapis.com/drive/v3',UP='https://www.googleapis.com/upload/drive/v3';
 let token=null,tokenExp=0,tokenClient=null,folderId=localStorage.getItem('wl-folder'),dataId=localStorage.getItem('wl-data'),remoteVersion=null,dirtySeq=0,saving=false,saveAgain=false,saveT=null,pollT=null;
-(()=>{const m=location.hash.match(/cid=([^&]+)/);if(m){localStorage.setItem('wl-cid',decodeURIComponent(m[1]));history.replaceState(null,'',location.pathname+location.search)}})();
+(()=>{const m=location.hash.match(/cid=([^&]+)/);if(m){localStorage.setItem('wl-cid',decodeURIComponent(m[1]));try{history.replaceState(null,'',location.pathname+location.search)}catch{}}})();
 const clientId=()=>CLIENT_ID||localStorage.getItem('wl-cid')||'';
 const tokenOk=()=>token&&Date.now()<tokenExp-60000;
 try{const t=JSON.parse(localStorage.getItem('wl-token')||'null');if(t&&Date.now()<t.exp-60000){token=t.token;tokenExp=t.exp}}catch{}
@@ -931,7 +934,7 @@ async function loadPeople(force){
   try{const r=await jget(`${API}/files/${folderId}/permissions?fields=permissions(id,emailAddress,displayName,role)`);people=(r.permissions||[]).filter(x=>x.emailAddress);showPeople()}
   catch{}finally{peopleLoading=false}
 }
-function showPeople(){const el=$('#people');if(!el||!people)return;el.innerHTML=people.map(x=>`<li>${esc(x.displayName||x.emailAddress)} <span class="muted">${esc(x.emailAddress)}, ${x.role==='owner'?'owner':'can edit'}</span></li>`).join('')}
+function showPeople(){const el=$('#people');if(!el||!people)return;el.innerHTML=[...people].sort((a,b)=>(b.role==='owner')-(a.role==='owner')).map(x=>`<li><span>${esc(x.emailAddress)}</span><span class="role">${x.role==='owner'?'Owner &amp; Editor':'Editor'}</span></li>`).join('')}
 function shareMsg(m,bad){const el=$('#shareMsg');if(el){el.textContent=m;el.style.color=bad?'#B4413C':''}else toast(m)}
 async function shareWith(btn){
   const inp=$('#shareIn');const em=(inp?inp.value:'').trim();
@@ -951,7 +954,7 @@ async function copyLink(){try{await navigator.clipboard.writeText(appLink());toa
 function shareHTML(){
   return `<section class="ov"><h2 class="sub-h">Sharing</h2>
   ${dataId&&tokenOk()?`<div class="share-row"><input class="in" id="shareIn" type="email" placeholder="Partner's Gmail address" autocomplete="email"><button class="btn" data-share>Share lookbook</button></div><p id="shareMsg" class="share-msg" role="status"></p><ul id="people" class="people"></ul><p><a class="muted" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener">Open folder in Drive</a></p>`:'<p class="muted">Sign in to share the lookbook.</p>'}
-  <div class="share-row"><button class="btn small" data-copy-link>Copy app link</button><span class="muted">Send this link so your partner opens the same app.</span></div></section>`;
+  <div class="share-row"><button class="btn small" data-copy-link>Copy app link</button></div></section>`;
 }
 
 /* Gate (setup and sign-in screen) */
@@ -1023,6 +1026,16 @@ async function exportPDF(btn){
   }catch(e){toast('PDF export failed. Check your connection.')}
   finally{btn.disabled=false;btn.textContent=old}
 }
+
+/* ---------- Remember the current page ---------- */
+const PAGES=['overview','summary',...CH.map(c=>c.id)];
+function setPage(pg,push){
+  if(!PAGES.includes(pg))pg='overview';S.active=pg;
+  try{localStorage.setItem('wl-page',pg)}catch{}
+  const h='#'+pg;try{if(location.hash!==h){if(push)history.pushState(null,'',h);else history.replaceState(null,'',h)}}catch{}
+}
+addEventListener('popstate',()=>{const pg=location.hash.slice(1);if(PAGES.includes(pg)&&pg!==S.active){S.active=pg;try{localStorage.setItem('wl-page',pg)}catch{}closeDrawer();toggleMenu(false);render();window.scrollTo({top:0})}});
+(()=>{const h=location.hash.slice(1);setPage(PAGES.includes(h)?h:(localStorage.getItem('wl-page')||'overview'),false)})();
 
 /* ---------- Init ---------- */
 try{const d=JSON.parse(localStorage.getItem('wl-doc')||'null');if(d)applyDoc(d)}catch{}
