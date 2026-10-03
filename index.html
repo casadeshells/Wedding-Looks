@@ -222,6 +222,16 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .lb-bar{display:flex;justify-content:center;padding:16px}
 .lb-bar .btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#1e1a1d;border-color:#fff}
 @media (max-width:640px){.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35)}#lbPrev{left:8px}#lbNext{right:8px}.lb-stage{position:relative;padding:0}}
+/* Tags */
+.tagbtn{position:absolute;top:4px;left:4px;right:4px;border:0;border-radius:3px;background:var(--mat);font-size:11px;line-height:1.3;padding:3px 5px;text-align:left;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tagbtn.has{color:var(--ink)}
+.tg-hint{margin:-8px 0 14px;color:var(--muted);font-size:14px}
+.tg-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.tg-opts button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--mat);border-radius:999px;padding:8px 14px;font-size:15px}
+.tg-opts .tick{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);display:inline-block;position:relative}
+.tg-opts button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tg-opts button[aria-pressed="true"] .tick{border-color:var(--paper);background:var(--paper)}
+.tg-opts button[aria-pressed="true"] .tick::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
 /* Color picker */
 .cp-scrim{position:fixed;inset:0;background:rgba(20,15,20,.4);z-index:95;opacity:0;pointer-events:none;transition:opacity .2s}
 .cp-scrim.on{opacity:1;pointer-events:auto}
@@ -363,6 +373,13 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
   <div class="lb-stage"><button class="lb-nav" id="lbPrev" aria-label="Previous picture">‹</button><img id="lbImg" alt=""><button class="lb-nav" id="lbNext" aria-label="Next picture">›</button></div>
   <div class="lb-bar"><button class="btn primary" id="lbEdit"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Edit details</button></div>
 </div>
+<div class="cp-scrim" id="tgScrim"></div>
+<div class="cp tg" id="tg" role="dialog" aria-modal="true" aria-labelledby="tgTitle" hidden>
+  <h2 id="tgTitle">Who is this for?</h2>
+  <p class="tg-hint">Pick one or more.</p>
+  <div class="tg-opts" id="tgOpts"></div>
+  <div class="cp-actions"><button type="button" class="btn small ghost" id="tgClear">Clear</button><span class="sp"></span><button type="button" class="btn" id="tgCancel">Cancel</button><button type="button" class="btn primary" id="tgOk">OK</button></div>
+</div>
 <div class="cp-scrim" id="cpScrim"></div>
 <div class="cp" id="cp" role="dialog" aria-modal="true" aria-labelledby="cpTitle" hidden>
   <h2 id="cpTitle">Choose a color</h2>
@@ -381,7 +398,8 @@ const CH=[
  {id:'church',name:'Church wedding',color:'#CDBFA8',note:'Gown, suit, veil and bridal party.'}
 ];
 const FIELDS=[['outfit','Outfit & fabric'],['accessories','Accessories'],['shoes','Shoes'],['beauty','Hair & makeup'],['notes','Notes']];
-const WHO=['Bride','Groom','Both','Family'];
+const WHO=['Bride','Groom','Both','Best man','Maid of honor','Groomsmen','Bridesmaids','Family'];
+const TAGS=['Bride','Groom','Best man','Maid of honor','Groomsmen','Bridesmaids','Family'];
 const STATUS=['Idea','Chosen','Sourcing','Ready'];
 const CURS={NGN:'Naira (₦)',EUR:'Euro (€)',USD:'Dollar ($)',GBP:'Pound (£)'};
 const DEFAULT_COSTS=[{label:'Outfit',amount:''},{label:'Shoes',amount:''},{label:'Accessories',amount:''}];
@@ -397,7 +415,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const num=v=>{const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0};
 const lookTotal=l=>(l.costs||[]).reduce((a,c)=>a+num(c.amount),0);
 function money(n){try{return new Intl.NumberFormat('en-US',{style:'currency',currency:S.currency,currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(n)}catch{return S.currency+' '+Math.round(n).toLocaleString('en-US')}}
-const tagOf=(l,id)=>(l.imageTags||{})[id]||'';
+const tagsOf=(l,id)=>{const v=(l.imageTags||{})[id];return Array.isArray(v)?v:(v?[v]:[])};
+const tagOf=(l,id)=>tagsOf(l,id).join(', ');
 const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 const urlCache=new Map();
 const imgAttr=id=>`data-img="${esc(id)}" src="${urlCache.get(id)||BLANK}"`;
@@ -495,7 +514,7 @@ function summaryHTML(){
   <div class="grand-label">Everything together</div><div class="big">${money(g)}</div>
   <div class="bars">${CH.map(c=>{const t=chTotal(c.id);return `<div class="bar-row" style="--c:${c.color}"><span>${c.name}</span><div class="bar"><i style="width:${t/max*100}%"></i></div><span class="amt">${money(t)}</span></div>`}).join('')}</div>
   <h2 class="sub-h">Who it's for</h2>
-  <div class="splits">${WHO.map(w=>`<div class="split"><span>${w}</span><b>${money(sumBy('who',w))}</b></div>`).join('')}</div>
+  <div class="splits">${(()=>{const ws=WHO.filter(w=>sumBy('who',w)>0);return (ws.length?ws:['Bride','Groom']).map(w=>`<div class="split"><span>${w}</span><b>${money(sumBy('who',w))}</b></div>`).join('')})()}</div>
   <h2 class="sub-h sm">How far along</h2>${(()=>{const col={Idea:'#D9D1D5',Chosen:'#A8854F',Sourcing:'#8A7F86',Ready:'var(--accent)'};const st=STATUS.map(x=>[x,all.filter(l=>(l.status||'Idea')===x).reduce((a,l)=>a+lookTotal(l),0)]);return `<div class="stack">${st.map(([x,v])=>v?`<i style="flex:${v};background:${col[x]}"></i>`:'').join('')}</div><div class="legend">${st.map(([x,v])=>`<span><i style="background:${col[x]}"></i>${x} ${money(v)}</span>`).join('')}</div>`})()}
   ${rows?`<h2 class="sub-h">Every look</h2><div class="tbl-wrap"><table><thead><tr><th>Ceremony</th><th>Look</th><th>For</th><th>Status</th><th class="n">Cost</th></tr></thead><tbody>${rows}<tr><td colspan="4"><b style="font-weight:500">Total</b></td><td class="n"><b style="font-weight:500">${money(g)}</b></td></tr></tbody></table></div>`:''}`;
 }
@@ -514,7 +533,7 @@ function drawerHTML(id){
   <div class="dr-body"><p id="peerNote" class="peer-note" hidden></p>
     <div class="field"><label for="f-title" class="sr">Look name</label><input id="f-title" class="in title-in" data-f="title" value="${esc(l.title)}" placeholder="Name this look" ${dis}></div>
     <div class="field"><span class="flabel">Pictures (tag who each is for; the outlined one is the cover)</span><div class="imgs">
-      ${imgs.map((im,i)=>`<figure class="${i===0?'cover':''}"><img ${imgAttr(im)} alt="" data-view="${id}|${i}" class="zoomable">${S.canWrite?`<select class="tagsel" data-tag="${im}" aria-label="Who is this picture for"><option value="">For…</option>${WHO.map(w=>`<option ${tagOf(l,im)===w?'selected':''}>${w}</option>`).join('')}</select>`:(tagOf(l,im)?`<span class="tagtxt">${esc(tagOf(l,im))}</span>`:'')}${S.canWrite?`<div class="ctl">${i?`<button data-cover="${i}">Make cover</button>`:'<span></span>'}<button data-rmimg="${i}">Remove</button></div>`:''}</figure>`).join('')}
+      ${imgs.map((im,i)=>`<figure class="${i===0?'cover':''}"><img ${imgAttr(im)} alt="" data-view="${id}|${i}" class="zoomable"><button class="tagbtn${tagsOf(l,im).length?' has':''}" data-tagimg="${im}" aria-label="Choose who this picture is for">${tagsOf(l,im).length?esc(tagOf(l,im)):'+ Tag'}</button>${S.canWrite?`<div class="ctl">${i?`<button data-cover="${i}">Make cover</button>`:'<span></span>'}<button data-rmimg="${i}">Remove</button></div>`:''}</figure>`).join('')}
       ${S.canWrite&&S.canUpload?`<button class="add" data-add-to="${id}">Add picture</button>`:''}
     </div></div>
     <div class="field"><span class="flabel">For</span><div class="seg">${WHO.map(w=>`<button data-who="${w}" aria-pressed="${l.who===w}" ${dis}>${w}</button>`).join('')}</div></div>
@@ -620,6 +639,18 @@ let lbX=null;
 $('#lb').addEventListener('touchstart',e=>{lbX=e.touches[0].clientX},{passive:true});
 $('#lb').addEventListener('touchend',e=>{if(lbX==null)return;const dx=e.changedTouches[0].clientX-lbX;lbX=null;if(Math.abs(dx)>45)lbStep(dx<0?1:-1)});
 
+/* ---------- Picture tags (more than one allowed) ---------- */
+let TG=null;
+function openTags(lookId,imgId){const l=S.looks.get(lookId);if(!l)return;TG={lookId,imgId,sel:new Set(tagsOf(l,imgId))};tgRender();$('#tg').hidden=false;$('#tgScrim').classList.add('on');setTimeout(()=>$('#tgOk').focus(),30)}
+function tgRender(){$('#tgOpts').innerHTML=TAGS.map(t=>`<button type="button" data-t="${t}" aria-pressed="${TG.sel.has(t)}"><span class="tick" aria-hidden="true"></span>${t}</button>`).join('')}
+function closeTags(){TG=null;$('#tg').hidden=true;$('#tgScrim').classList.remove('on')}
+function okTags(){if(!TG)return;const {lookId,imgId}=TG;const arr=TAGS.filter(t=>TG.sel.has(t));closeTags();change(lookId,l=>{const m={...(l.imageTags||{})};if(arr.length)m[imgId]=arr;else delete m[imgId];l.imageTags=m},{redrawDrawer:true})}
+$('#tgOpts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!TG)return;const t=b.dataset.t;TG.sel.has(t)?TG.sel.delete(t):TG.sel.add(t);b.setAttribute('aria-pressed',TG.sel.has(t))});
+$('#tgOk').addEventListener('click',okTags);
+$('#tgCancel').addEventListener('click',closeTags);
+$('#tgClear').addEventListener('click',()=>{if(!TG)return;TG.sel.clear();tgRender()});
+$('#tgScrim').addEventListener('click',closeTags);
+
 /* ---------- Color picker (with OK) ---------- */
 const PRESETS=[['Wine','#7A2E3A'],['Burgundy','#5C1A2B'],['Ruby','#9B111E'],['Coral','#E8735A'],['Blush','#E8C1C5'],['Rose','#C7899B'],['Peach','#F2C1A0'],['Orange','#E0782E'],['Mustard','#D4A017'],['Gold','#C9A56E'],['Champagne','#EAD9B8'],['Ivory','#F6F0E3'],['White','#FFFFFF'],['Silver','#C0C0C8'],['Lilac','#B9A6D3'],['Purple','#5B2A86'],['Royal blue','#2546A6'],['Navy','#1C2A4A'],['Teal','#1F6F78'],['Emerald','#2F5D50'],['Sage','#9DAE8C'],['Mint','#BFE3D0'],['Chocolate','#5A3A2A'],['Black','#1E1A1D']];
 let CP=null;
@@ -674,6 +705,7 @@ document.addEventListener('click',e=>{
   if(d.open){if(d.goto){setPage(d.goto,true);render()}openDrawer(d.open);return}
   if('close' in d){const wasNew=DR&&DR.isNew,wasDirty=DR&&DR.dirty;closeDrawer();if(wasDirty||wasNew)toast('Saved');return}
   if('cancel' in d){cancelDrawer();return}
+  if(d.tagimg&&S.open){openTags(S.open,d.tagimg);return}
   if(d.palAdd){const k=d.palAdd;if((metaObj(k).palette||[]).length>=12){toast('Up to 12 colors per palette.');return}
     openPicker({title:'Add a color',hex:'#7A2E3A',name:'',onOk:(hex,name)=>changeMeta(k,o=>{o.palette=[...(o.palette||[]),{hex,name}]})});return}
   if(d.palEdit){const [k,i]=d.palEdit.split('|');const p=(metaObj(k).palette||[])[+i];if(!p)return;
@@ -715,7 +747,7 @@ document.addEventListener('change',e=>{
 $('#file').addEventListener('change',e=>{const f=e.target.files;addImages(f,{lookId:pendingTarget});e.target.value=''});
 $('#scrim').addEventListener('click',closeDrawer);
 $('#navScrim').addEventListener('click',()=>toggleMenu(false));
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('nav-open')){toggleMenu(false);return}if(LB){if(e.key==='Escape')closeLightbox();else if(e.key==='ArrowRight')lbStep(1);else if(e.key==='ArrowLeft')lbStep(-1);return}if(!$('#cp').hidden){if(e.key==='Escape')closePicker();else if(e.key==='Enter'&&e.target.closest('#cp'))okPicker();return}if(e.key==='Escape'&&S.open)closeDrawer()});
+document.addEventListener('keydown',e=>{if(TG){if(e.key==='Escape')closeTags();else if(e.key==='Enter')okTags();return}if(e.key==='Escape'&&document.body.classList.contains('nav-open')){toggleMenu(false);return}if(LB){if(e.key==='Escape')closeLightbox();else if(e.key==='ArrowRight')lbStep(1);else if(e.key==='ArrowLeft')lbStep(-1);return}if(!$('#cp').hidden){if(e.key==='Escape')closePicker();else if(e.key==='Enter'&&e.target.closest('#cp'))okPicker();return}if(e.key==='Escape'&&S.open)closeDrawer()});
 let dragN=0;
 addEventListener('dragenter',e=>{if([...e.dataTransfer.types].includes('Files')&&S.canWrite){dragN++;$('#drop').classList.add('on')}});
 addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN)$('#drop').classList.remove('on')});
