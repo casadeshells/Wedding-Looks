@@ -1208,6 +1208,13 @@ let token=null,tokenExp=0,tokenClient=null,folderId=localStorage.getItem('wl-fol
 (()=>{const m=location.hash.match(/cid=([^&]+)/);if(m){localStorage.setItem('wl-cid',decodeURIComponent(m[1]));try{history.replaceState(null,'',location.pathname+location.search)}catch{}}})();
 const clientId=()=>CLIENT_ID||localStorage.getItem('wl-cid')||'';
 const tokenOk=()=>token&&Date.now()<tokenExp-60000;
+let OAUTH_ERR=null;
+(()=>{const h=location.hash;if(!/access_token=|error=/.test(h))return;const q=new URLSearchParams(h.slice(1));
+  const st=q.get('state'),ok=st&&st===localStorage.getItem('wl-oauth-state');
+  if(ok&&q.get('access_token')){const tk=q.get('access_token'),ex=Date.now()+(+q.get('expires_in')||3600)*1000;localStorage.setItem('wl-token',JSON.stringify({token:tk,exp:ex}));localStorage.setItem('wl-signed','1')}
+  else if(q.get('error'))OAUTH_ERR=q.get('error');
+  localStorage.removeItem('wl-oauth-state');const back=localStorage.getItem('wl-return')||localStorage.getItem('wl-page')||'overview';
+  try{history.replaceState(null,'',location.pathname+location.search+'#'+back)}catch{location.hash=back}})();
 try{const t=JSON.parse(localStorage.getItem('wl-token')||'null');if(t&&Date.now()<t.exp-60000){token=t.token;tokenExp=t.exp}}catch{}
 
 function setSync(st){S.sync=st;document.querySelectorAll('[data-sync]').forEach(b=>{b.outerHTML=syncChip()})}
@@ -1372,9 +1379,22 @@ addEventListener('online',()=>{if(tokenOk())syncNow()});
 /* Sign-in */
 let gisReady=null;
 function loadGIS(){if(gisReady)return gisReady;gisReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.onload=res;sc.onerror=()=>{gisReady=null;rej()};document.head.appendChild(sc)});return gisReady}
-async function signIn(choose){
+const isAppleDevice=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const inStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+// iPhones and iPads block Google's sign-in popup, so they use a full-page sign-in instead
+const useRedirect=()=>isAppleDevice()||inStandalone();
+function redirectUri(){return location.origin+location.pathname.replace(/index\.html$/,'')}
+function signInRedirect(choose){
+  const st=rid();localStorage.setItem('wl-oauth-state',st);localStorage.setItem('wl-return',S.active||'overview');
+  const hint=localStorage.getItem('wl-email')||'';
+  const q={client_id:clientId(),redirect_uri:redirectUri(),response_type:'token',scope:SCOPE,include_granted_scopes:'true',state:st};
+  if(choose||!hint)q.prompt='select_account';else q.login_hint=hint;
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+new URLSearchParams(q).toString();
+}
+function signIn(choose){
   if(!clientId()){gate();return}
-  try{await loadGIS()}catch{toast('Could not reach Google. Check your connection.');return}
+  if(useRedirect()){signInRedirect(choose);return}
+  if(!(window.google&&google.accounts&&google.accounts.oauth2)){loadGIS().then(()=>signIn(choose)).catch(()=>toast('Could not reach Google. Check your connection.'));return}
   if(!tokenClient)tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId(),scope:SCOPE,callback:resp=>{
     if(resp.error){toast('Sign-in was cancelled.');return}
     token=resp.access_token;tokenExp=Date.now()+(resp.expires_in||3600)*1000;
@@ -1384,6 +1404,7 @@ async function signIn(choose){
   const hint=localStorage.getItem('wl-email')||'';
   tokenClient.requestAccessToken(choose||!hint?{prompt:'select_account'}:{prompt:'',hint});
 }
+if(!useRedirect())setTimeout(()=>loadGIS().catch(()=>{}),300);
 async function connect(){
   setSync('connecting');
   try{
@@ -1777,6 +1798,7 @@ addEventListener('popstate',()=>{
 (()=>{const h=location.hash.slice(1);setPage(PAGES.includes(h)?h:(localStorage.getItem('wl-page')||'overview'),false)})();
 
 /* ---------- Init ---------- */
+if(OAUTH_ERR)setTimeout(()=>toast(OAUTH_ERR==='access_denied'?'Sign-in was cancelled.':'Sign-in failed: '+OAUTH_ERR),600);
 try{const d=JSON.parse(localStorage.getItem('wl-doc')||'null');if(d)applyDoc(d)}catch{}
 render();
 if(!clientId())gate();
