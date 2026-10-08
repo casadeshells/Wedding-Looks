@@ -212,7 +212,7 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .news-row b{font-weight:500}
 .news-t{display:block;font-size:12px;color:var(--muted)}
 .news-badge{display:inline-block;min-width:18px;padding:0 6px;border-radius:999px;background:#B4413C;color:#fff;font-style:normal;font-size:11px;line-height:18px;text-align:center}
-.hamb-dot.news{background:#B4413C}
+.hamb-dot.alert{background:#B4413C}
 .move-to{font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--mat);margin-left:auto}
 .padd-tile.pal-ai{gap:4px;padding:6px;text-align:center}
 .padd-tile.pal-ai .t{font-size:11px;line-height:1.2}
@@ -700,7 +700,7 @@ function renderSide(){
   $('#sideFoot').innerHTML=foot;$('#sideFootMobile').innerHTML='';
   const cur=S.active==='overview'?{name:'Overview',color:'var(--gold)'}:S.active==='summary'?{name:'Cost summary',color:'var(--ink)'}:S.active==='inbox'?{name:'Ideas inbox',color:'var(--muted)'}:CH.find(c=>c.id===S.active);
   const on=(S.peers||[]).some(p=>p.online);
-  $('#mbar').innerHTML=`<button class="hamb" data-menu aria-label="Open menu" aria-expanded="${document.body.classList.contains('nav-open')}"><span></span><span></span><span></span>${on?'<i class="hamb-dot" title="Your partner is online"></i>':nn?'<i class="hamb-dot news" title="New activity"></i>':''}</button>
+  $('#mbar').innerHTML=`<button class="hamb" data-menu aria-label="Open menu" aria-expanded="${document.body.classList.contains('nav-open')}"><span></span><span></span><span></span>${on?'<i class="hamb-dot" title="Your partner is online"></i>':nn?'<i class="hamb-dot alert" title="New activity"></i>':''}</button>
     <button class="mb-title" data-menu><span class="dot" style="--c:${cur.color}"></span><span>${esc(cur.name)}</span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
     <span class="mb-total">${money(grandTotal())}</span>`;
 }
@@ -824,20 +824,30 @@ function boardHTML(c){
   return `${filtered?`<p class="flt-note">${looks.length} of ${all.length} looks <button class="linkbtn" data-clear-flt>Clear</button></p>`:''}<div class="board">${looks.map(cardHTML).join('')}${S.canWrite?Array.from({length:slots},(_,k)=>`<button class="slot" data-add-pics><span><strong>Look ${words[looks.length+k]||looks.length+k+1}</strong>Add a picture</span></button>`).join(''):''}</div>`;
 }
 function refreshBoard(){const w=$('#boardWrap');const c=CH.find(x=>x.id===S.active);if(w&&c){w.innerHTML=boardHTML(c);hydrate()}}
+const CARD_GROUPS=['Bride','Groom','Best man','Maid of honor','Bridesmaids','Groomsmen','Family','Ladies','Gentlemen'];
+function normAso(a){
+  a=a||{};const sec={...(a.sec||{})};
+  if(!sec.Ladies&&(a.ladies||a.fabric||a.price||a.pic))sec.Ladies=a.ladies||{fabric:a.fabric,price:a.price,pic:a.pic};
+  if(!sec.Gentlemen&&a.men)sec.Gentlemen=a.men;
+  let groups=Array.isArray(a.groups)?a.groups.filter(g=>CARD_GROUPS.includes(g)):null;
+  if(!groups)groups=a.view==='ladies'?['Ladies']:a.view==='men'?['Gentlemen']:(a.ladies||a.men||a.fabric)?['Ladies','Gentlemen']:[];
+  return {groups,sec};
+}
 function asoebiHTML(c){
-  const a=(S.chapters[c.id]||{}).asoebi||{};const view=a.view||'both';
-  const imgs=[...new Set(byChapter(c.id).flatMap(l=>l.images||[]))].slice(0,24);
-  const picker=(sec)=>{const cur=(a[sec]||{}).pic||'';const list=cur&&!imgs.includes(cur)?[cur,...imgs]:imgs;
-    return `<div class="aso-pics"><span class="mini">Picture idea</span><div><button type="button" class="aso-pic${!cur?' on':''}" data-ae-pic="${c.id}|${sec}|"><span>None</span></button>${list.map(im=>`<button type="button" class="aso-pic${cur===im?' on':''}" data-ae-pic="${c.id}|${sec}|${im}"><img ${imgAttr(im)} alt=""></button>`).join('')}<button type="button" class="aso-pic up" data-ae-up="${c.id}|${sec}" aria-label="Upload a picture"><span>+ Upload</span></button></div></div>`};
-  const sec=(key,title,fab,price)=>{const x=a[key]||{};return `<fieldset class="aso-sec"><legend>${title}</legend>
-    <label>Fabric<input class="in" data-ae="${c.id}|${key}.fabric" value="${esc(x.fabric||'')}" placeholder="${fab}"></label>
-    <label>Price<input class="in" data-ae="${c.id}|${key}.price" value="${esc(x.price||'')}" placeholder="${price}"></label>
-    ${picker(key)}</fieldset>`};
-  return `<details class="aso" ${a.open?'open':''}><summary><span>Aso-ebi card</span><small>A shareable card with fabric, colors and price for family and friends</small></summary>
+  const a=(S.chapters[c.id]||{}).asoebi||{};const {groups,sec}=normAso(a);
+  const looks=byChapter(c.id);
+  const picker=(g)=>{const cur=(sec[g]||{}).pic||'';
+    const all=[...new Set(looks.flatMap(l=>(l.images||[]).map(im=>({im,hit:tagsOf(l,im).includes(g)||lookFor(l,g)}))).sort((x,y)=>y.hit-x.hit).map(x=>x.im))].slice(0,24);
+    const list=cur&&!all.includes(cur)?[cur,...all]:all;
+    return `<div class="aso-pics"><span class="mini">Picture idea</span><div><button type="button" class="aso-pic${!cur?' on':''}" data-ae-pic="${c.id}|${g}|"><span>None</span></button>${list.map(im=>`<button type="button" class="aso-pic${cur===im?' on':''}" data-ae-pic="${c.id}|${g}|${im}"><img ${imgAttr(im)} alt=""></button>`).join('')}<button type="button" class="aso-pic up" data-ae-up="${c.id}|${g}" aria-label="Upload a picture"><span>+ Upload</span></button></div></div>`};
+  const secHTML=g=>{const x=sec[g]||{};return `<fieldset class="aso-sec"><legend>${g}</legend>
+    <label>Outfit or fabric<input class="in" data-ae-g="${c.id}|${g}|fabric" value="${esc(x.fabric||'')}" placeholder="e.g. Wine lace with gold gele"></label>
+    <label>Price (optional)<input class="in" data-ae-g="${c.id}|${g}|price" value="${esc(x.price||'')}" placeholder="e.g. ₦45,000 per set"></label>
+    ${picker(g)}</fieldset>`};
+  return `<details class="aso" ${a.open?'open':''}><summary><span>${c.name} outfit card</span><small>A shareable card with outfits, colors and prices for family and friends</small></summary>
   <div class="aso-grid"><div class="aso-fields">
-    <div><span class="mini">Card style</span><div class="seg aso-view">${[['both','Ladies and gentlemen'],['ladies','Ladies only'],['men','Gentlemen only']].map(([v,lab])=>`<button type="button" data-ae-view="${c.id}|${v}" aria-pressed="${view===v}">${lab}</button>`).join('')}</div></div>
-    ${view!=='men'?sec('ladies','Ladies','e.g. Wine lace and gold gele','e.g. ₦45,000 per set'):''}
-    ${view!=='ladies'?sec('men','Gentlemen','e.g. Wine aso-oke and cap','e.g. ₦35,000 per set'):''}
+    <div><span class="mini">Who is this card for? (up to 4)</span><div class="chips aso-groups">${CARD_GROUPS.map(g=>`<button type="button" class="vchip" data-ae-grp="${c.id}|${g}" aria-pressed="${groups.includes(g)}">${g}</button>`).join('')}</div></div>
+    ${groups.map(secHTML).join('')||'<p class="muted" style="margin:0">Pick at least one person or group above.</p>'}
     <label>How to order<input class="in" data-ae="${c.id}|contact" value="${esc(a.contact||'')}" placeholder="e.g. Call Aunty Grace, 0803 123 4567"></label>
     <label>Note<input class="in" data-ae="${c.id}|note" value="${esc(a.note||'')}" placeholder="e.g. Order by 30 November"></label>
   </div><div class="aso-prev"><canvas id="aeCanvas" width="1080" height="1350" aria-label="Card preview"></canvas>
@@ -1093,7 +1103,8 @@ document.addEventListener('click',e=>{
   if('vadd' in d){openVendor();return}
   if(d.vedit){openVendor(d.vedit);return}
   if(d.pdfCh){exportPDF(t,d.pdfCh);return}
-  if(d.aePic!==undefined){const [k,sec,img]=d.aePic.split('|');changeMeta(k,o=>{const a=o.asoebi||{};o.asoebi={...a,[sec]:{...(a[sec]||{}),pic:img},open:true}});return}
+  if(d.aePic!==undefined){const [k,g,img]=d.aePic.split('|');changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);o.asoebi={...a,groups:n.groups,sec:{...n.sec,[g]:{...(n.sec[g]||{}),pic:img}},open:true}});return}
+  if(d.aeGrp){const [k,g]=d.aeGrp.split('|');const a0=(S.chapters[k]||{}).asoebi||{};const n0=normAso(a0);if(!n0.groups.includes(g)&&n0.groups.length>=4){toast('Up to 4 on one card. Make another card for the rest.');return}changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);const gs=n.groups.includes(g)?n.groups.filter(x=>x!==g):[...n.groups,g];o.asoebi={...a,groups:CARD_GROUPS.filter(x=>gs.includes(x)),sec:n.sec,open:true}});return}
   if(d.aeView){const [k,v]=d.aeView.split('|');changeMeta(k,o=>{o.asoebi={...(o.asoebi||{}),view:v,open:true}});return}
   if(d.aeUp){if(!folderId||!tokenOk()){toast('Sign in with Google to upload.');return}AE_UP=d.aeUp;$('#aeFile').click();return}
   if(d.aeDl){asoCard(d.aeDl,'download');return}
@@ -1153,6 +1164,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.moveTo){const id=t.dataset.moveTo,v=t.value;if(v){change(id,l=>{l.chapter=v;l.order=Date.now()});toast('Moved to '+pageName(v))}return}
   if(t.dataset.tagline){const k=t.dataset.tagline,v=t.value.trim();changeMeta(k,o=>{o.note=v});return}
   if(t.dataset.budget){const k=t.dataset.budget,v=t.value.trim();changeMeta(k,o=>{o.budget=v});return}
+  if(t.dataset.aeG){const [k,g,f]=t.dataset.aeG.split('|');const v=t.value;changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);o.asoebi={...a,groups:n.groups,sec:{...n.sec,[g]:{...(n.sec[g]||{}),[f]:v}},open:true}});drawAso(k);return}
   if(t.dataset.ae){const [k,f]=t.dataset.ae.split('|');const v=t.value;changeMeta(k,o=>{const a={...(o.asoebi||{}),open:true};const [p1,p2]=f.split('.');if(p2)a[p1]={...(a[p1]||{}),[p2]:v};else a[p1]=v;o.asoebi=a});drawAso(k);return}
   if(t.dataset.occ!==undefined&&S.open){const v=t.value;change(S.open,l=>{l.chapter=v;l.order=Date.now()},{redrawDrawer:true});toast('Moved to '+pageName(v));return}
   if(t.dataset.td!==undefined&&S.open){const v=t.value;change(S.open,l=>{l.tasks[+t.dataset.td].date=v});return}
@@ -1183,8 +1195,8 @@ $('#ppList').addEventListener('click',e=>{const b=e.target.closest('button');if(
 $('#ppOk').addEventListener('click',()=>{if(!PP)return;const {k,cols,sel}=PP;const add=cols.filter((_,i)=>sel.has(i));closePalPick();if(add.length){changeMeta(k,o=>{const ex=new Set((o.palette||[]).map(p=>p.hex.toUpperCase()));o.palette=[...(o.palette||[]),...add.filter(c=>!ex.has(c.hex.toUpperCase()))].slice(0,12)});toast(`Added ${add.length} ${add.length===1?'color':'colors'}`)}});
 $('#ppCancel').addEventListener('click',()=>closePalPick());$('#ppScrim').addEventListener('click',()=>closePalPick());
 let AE_UP=null;
-$('#aeFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f||!AE_UP)return;const [k,sec]=AE_UP.split('|');AE_UP=null;
-  try{toast('Adding picture');const id=await storeImage(f);changeMeta(k,o=>{const a=o.asoebi||{};o.asoebi={...a,[sec]:{...(a[sec]||{}),pic:id},open:true}})}catch(err){handleErr(err)}});
+$('#aeFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f||!AE_UP)return;const [k,g]=AE_UP.split('|');AE_UP=null;
+  try{toast('Adding picture');const id=await storeImage(f);changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);o.asoebi={...a,groups:n.groups,sec:{...n.sec,[g]:{...(n.sec[g]||{}),pic:id}},open:true}})}catch(err){handleErr(err)}});
 $('#file').addEventListener('change',e=>{const f=e.target.files;addImages(f,{lookId:pendingTarget});e.target.value=''});
 $('#scrim').addEventListener('click',closeDrawer);
 $('#navScrim').addEventListener('click',()=>toggleMenu(false));
@@ -1587,18 +1599,19 @@ document.addEventListener('pointerup',endDrag);document.addEventListener('pointe
 function wrapText(ctx,text,maxW){const words=String(text||'').split(/\s+/);const lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);return lines}
 async function loadBmp(id){if(!id)return null;try{const u=await ensureImg(id);if(!u)return null;return await createImageBitmap(await (await fetch(u)).blob())}catch{return null}}
 function coverDraw(ctx,bmp,x,y,w,h){const sc=Math.max(w/bmp.width,h/bmp.height);ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.drawImage(bmp,x+(w-bmp.width*sc)/2,y+(h-bmp.height*sc)/2,bmp.width*sc,bmp.height*sc);ctx.restore()}
-async function drawAso(k,cv,viewArg){
+async function drawAso(k,cv){
   cv=cv||$('#aeCanvas');if(!cv)return null;const ctx=cv.getContext('2d');const W=1080,H=1350;
   const c=CH.find(x=>x.id===k);const m=S.chapters[k]||{};const a=m.asoebi||{};const pal=(m.palette||[]).length?m.palette:(S.overview.palette||[]);
   try{await Promise.all([document.fonts.load('80px Italiana'),document.fonts.load('32px Jost'),document.fonts.load('500 32px Jost')])}catch{}
-  const accent=(pal[0]&&pal[0].hex)||c.color;const view=viewArg||a.view||'both';
-  const Ld={...(a.ladies||{})},Gm={...(a.men||{})};
-  if(!Ld.fabric&&!Ld.price&&!Ld.pic&&(a.fabric||a.price||a.pic)){Ld.fabric=a.fabric;Ld.price=a.price;Ld.pic=a.pic}
+  const accent=(pal[0]&&pal[0].hex)||c.color;const {groups,sec}=normAso(a);
+  const G=groups.map(g=>({g,...(sec[g]||{})}));
+  const forTxt=g=>'For the '+g.toLowerCase();
   const T=(txt,font,color,x,yy,draw,align='center')=>{ctx.font=font;ctx.textAlign=align;if(draw){ctx.fillStyle=color;ctx.fillText(txt,x,yy)}};
-  const header=(y,draw,sub)=>{
-    y+=66;T(sub||'A S O - E B I','500 26px Jost, sans-serif','#7A7178',W/2,y,draw);
+  const header=(y,draw)=>{
+    const sub=G.length===1?`${c.name} outfit  ·  ${forTxt(G[0].g)}`:`${c.name} outfit`;
+    y+=66;if('letterSpacing' in ctx)ctx.letterSpacing='4px';T(sub.toUpperCase(),'500 24px Jost, sans-serif','#7A7178',W/2,y,draw);if('letterSpacing' in ctx)ctx.letterSpacing='0px';
     y+=86;T('Bako & Made','90px Italiana, Georgia, serif','#221C22',W/2,y,draw);
-    y+=56;T(c.name+(m.date?'  ·  '+fmtDate(m.date):''),'32px Jost, sans-serif','#4a434a',W/2,y,draw);y+=44;
+    if(m.date){y+=56;T(fmtDate(m.date),'32px Jost, sans-serif','#4a434a',W/2,y,draw)}y+=44;
     if(pal.length){const r=24,gap=38,ps=pal.slice(0,6),tw=ps.length*(2*r)+(ps.length-1)*gap;let x=(W-tw)/2+r;
       if(draw)for(const p of ps){ctx.fillStyle=p.hex;ctx.beginPath();ctx.arc(x,y+r,r,0,7);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=2;ctx.stroke();if(p.name){T(p.name,'21px Jost, sans-serif','#7A7178',x,y+2*r+28,true)}x+=2*r+gap}
       y+=2*r+(ps.some(p=>p.name)?40:8)}
@@ -1607,32 +1620,31 @@ async function drawAso(k,cv,viewArg){
     if(a.contact){y+=44;T('HOW TO ORDER','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='32px Jost, sans-serif';for(const ln of wrapText(ctx,a.contact,W-200).slice(0,2)){y+=42;T(ln,'32px Jost, sans-serif','#221C22',W/2,y,draw)}}
     if(a.note){ctx.font='italic 28px Jost, sans-serif';for(const ln of wrapText(ctx,a.note,W-200).slice(0,2)){y+=46;T(ln,'italic 28px Jost, sans-serif','#7A2E3A',W/2,y,draw)}}
     return y};
-  const col=(x,w,label,d,y,draw)=>{
-    y+=36;T(label.toUpperCase(),'500 22px Jost, sans-serif',accent,x,y,draw);
-    if(d.fabric){ctx.font='29px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,w).slice(0,3)){y+=40;T(ln,'29px Jost, sans-serif','#221C22',x,y,draw)}}
-    if(d.price){ctx.font='50px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,w).slice(0,2)){y+=58;T(ln,'50px Italiana, Georgia, serif','#221C22',x,y,draw)}}
-    return y};
-  const single=(d,label)=>{const blk=(y,draw)=>{y=header(y,draw,label?`A S O - E B I  ·  ${label.toUpperCase()}`:null);
-      if(d.fabric){y+=40;T('FABRIC','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='34px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,W-200).slice(0,3)){y+=44;T(ln,'34px Jost, sans-serif','#221C22',W/2,y,draw)}}
-      if(d.price){y+=40;T('PRICE','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='60px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,W-200).slice(0,2)){y+=66;T(ln,'60px Italiana, Georgia, serif','#221C22',W/2,y,draw)}}
-      return footerBits(y,draw)};return blk};
-  const combined=(y,draw)=>{y=header(y,draw);const cw=(W-200)/2;const y0=y;
-    const yl=view==='men'?y:col(100+cw/2,cw-30,'Ladies',Ld,y,draw),yr=col(W-100-cw/2,cw-30,'Gentlemen',Gm,y,draw);
-    y=Math.max(yl,yr);if(draw){ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2,y0+14);ctx.lineTo(W/2,y+6);ctx.stroke()}
+  const single=(y,draw)=>{y=header(y,draw);const d=G[0]||{};
+    if(d.fabric){y+=40;T('OUTFIT','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='34px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,W-200).slice(0,3)){y+=44;T(ln,'34px Jost, sans-serif','#221C22',W/2,y,draw)}}
+    if(d.price){y+=40;T('PRICE','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='60px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,W-200).slice(0,2)){y+=66;T(ln,'60px Italiana, Georgia, serif','#221C22',W/2,y,draw)}}
+    return footerBits(y,draw)};
+  const grid=(y,draw)=>{y=header(y,draw);
+    const n=G.length,cols=n<=3?n:2,rows=Math.ceil(n/cols),cw=(W-160)/cols;const fs=cols===3?25:29,ps=cols===3?40:50;
+    for(let r=0;r<rows;r++){const y0=y;let yMax=y;
+      for(let ci=0;ci<cols;ci++){const d=G[r*cols+ci];if(!d)continue;const x=80+cw*ci+cw/2;let yy=y0;
+        yy+=36;T(d.g.toUpperCase(),'500 21px Jost, sans-serif',accent,x,yy,draw);
+        if(d.fabric){ctx.font=fs+'px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,cw-36).slice(0,3)){yy+=fs+11;T(ln,fs+'px Jost, sans-serif','#221C22',x,yy,draw)}}
+        if(d.price){ctx.font=ps+'px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,cw-36).slice(0,2)){yy+=ps+8;T(ln,ps+'px Italiana, Georgia, serif','#221C22',x,yy,draw)}}
+        yMax=Math.max(yMax,yy)}
+      if(draw){ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=2;for(let ci=1;ci<cols;ci++){if(!G[r*cols+ci])continue;const x=80+cw*ci;ctx.beginPath();ctx.moveTo(x,y0+14);ctx.lineTo(x,yMax+6);ctx.stroke()}}
+      y=yMax+(r<rows-1?18:0)}
     return footerBits(y+10,draw)};
-  let painter,pics;
-  if(view==='ladies'){painter=single(Ld,'For the ladies');pics=[[Ld.pic,'Ladies']]}
-  else if(view==='men'){painter=single(Gm,'For the gentlemen');pics=[[Gm.pic,'Gentlemen']]}
-  else{painter=combined;pics=[[Ld.pic,'Ladies'],[Gm.pic,'Gentlemen']]}
+  const painter=G.length<=1?single:grid;
   const contentH=painter(0,false)+40,footer=64;
-  const bmps=await Promise.all(pics.map(([id])=>loadBmp(id)));const anyPic=bmps.some(Boolean);
-  const room=H-footer-contentH-10;const top=anyPic?Math.max(240,Math.min(620,room)):Math.max(110,Math.min(200,room));
+  const shown=G.length?G:[{g:''}];
+  const bmps=await Promise.all(shown.map(d=>loadBmp(d.pic)));const anyPic=bmps.some(Boolean);
+  const room=H-footer-contentH-10;const top=anyPic?Math.max(220,Math.min(620,room)):Math.max(110,Math.min(200,room));
   ctx.fillStyle='#F7F3EF';ctx.fillRect(0,0,W,H);
-  const n=pics.length,gap=n>1?8:0,pw=(W-gap*(n-1))/n;
-  pics.forEach(([,label],i)=>{const x=i*(pw+gap);const b=bmps[i];
+  const n=shown.length,gap=n>1?8:0,pw=(W-gap*(n-1))/n;
+  shown.forEach((d,i)=>{const x=i*(pw+gap);const b=bmps[i];
     if(b)coverDraw(ctx,b,x,0,pw,top);else{const p=pal[i%Math.max(1,pal.length)];ctx.fillStyle=p?p.hex:accent;ctx.fillRect(x,0,pw,top)}
-    if(n>1&&anyPic){ctx.font='500 24px Jost, sans-serif';const tw=ctx.measureText(label).width+36;ctx.fillStyle='rgba(247,243,239,.92)';const bx=x+20,by=top-58;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,tw,40,20):ctx.rect(bx,by,tw,40);ctx.fill();ctx.fillStyle='#221C22';ctx.textAlign='left';ctx.fillText(label,bx+18,by+28)}});
-  if(n>1){ctx.fillStyle='#F7F3EF';ctx.fillRect(pw,0,gap,top)}
+    if(n>1&&anyPic&&d.g){ctx.font=`500 ${n>3?20:24}px Jost, sans-serif`;const tw=ctx.measureText(d.g).width+32;ctx.fillStyle='rgba(247,243,239,.92)';const bx=x+14,by=top-54;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,Math.min(tw,pw-28),38,19):ctx.rect(bx,by,Math.min(tw,pw-28),38);ctx.fill();ctx.fillStyle='#221C22';ctx.textAlign='left';ctx.fillText(d.g,bx+16,by+26)}});
   ctx.fillStyle=accent;ctx.fillRect(0,top,W,10);
   const used=painter(top+10,true);
   ctx.textAlign='center';ctx.fillStyle='#b0a7ae';ctx.font='20px Jost, sans-serif';ctx.fillText('Designed by Casadeshells',W/2,Math.max(used+46,H-32));
@@ -1640,8 +1652,8 @@ async function drawAso(k,cv,viewArg){
 }
 async function asoCard(k,mode){
   const cv=document.createElement('canvas');cv.width=1080;cv.height=1350;await drawAso(k,cv);
-  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));const vw=((S.chapters[k]||{}).asoebi||{}).view||'both';const name=`aso-ebi-${k}${vw==='both'?'':'-'+vw}.png`;
-  if(mode==='share'&&navigator.canShare){const f=new File([blob],name,{type:'image/png'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Aso-ebi'});return}catch(e){if(e.name==='AbortError')return}}}
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));const gs=normAso((S.chapters[k]||{}).asoebi).groups;const cn=(CH.find(x=>x.id===k)||{name:k}).name.replace(/\s+/g,'-');const name=`${cn}-outfit${gs.length&&gs.length<=2?'-'+gs.join('-').toLowerCase().replace(/\s+/g,'-'):''}.png`;
+  if(mode==='share'&&navigator.canShare){const f=new File([blob],name,{type:'image/png'});if(navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:name.replace(/-/g,' ').replace('.png','')});return}catch(e){if(e.name==='AbortError')return}}}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
 }
 
