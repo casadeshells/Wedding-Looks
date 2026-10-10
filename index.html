@@ -1667,12 +1667,14 @@ function cardTheme(pal,mode){
     let a2=acc;let i=0;while(contrastOf(a2,bg)<3.2&&i<8){a2=mixHex(a2,'#000000',.18);i++}t.accent=a2}
   t.band=t.accent;return t;
 }
+const tidy=t=>{t=String(t||'').replace(/\s+([,.;])/g,'$1').replace(/([,;])(?=\S)/g,'$1 ').replace(/\s+/g,' ').trim().replace(/[.,;]+$/,'');return t?t.charAt(0).toUpperCase()+t.slice(1):''};
+function fitLines(ctx,text,w,max){const ls=wrapText(ctx,text,w);if(ls.length<=max)return ls;const out=ls.slice(0,max);let last=out[max-1];const cut=last.lastIndexOf(',');if(cut>last.length*.4)last=last.slice(0,cut);while(ctx.measureText(last+'…').width>w&&last.includes(' '))last=last.slice(0,last.lastIndexOf(' '));out[max-1]=last.replace(/[,;\s]+$/,'')+'…';return out}
 async function drawAso(k,cv){
   cv=cv||$('#aeCanvas');if(!cv)return null;const ctx=cv.getContext('2d');const W=1080,H=1350;
   const c=CH.find(x=>x.id===k);const m=S.chapters[k]||{};const a=m.asoebi||{};const pal=(m.palette||[]).length?m.palette:(S.overview.palette||[]);
-  try{await Promise.all([document.fonts.load('80px Italiana'),document.fonts.load('32px Jost'),document.fonts.load('500 32px Jost')])}catch{}
+  try{await Promise.all([document.fonts.load('80px Italiana'),document.fonts.load('32px Jost'),document.fonts.load('300 32px Jost'),document.fonts.load('500 32px Jost')])}catch{}
   const th=cardTheme(pal,a.theme||'palette');const {groups,sec}=normAso(a);
-  const G=groups.map(g=>{const d={g,...(sec[g]||{})};const au=cardAuto(k,g,d);return {...d,outfit:d.fabric||au.outfit,acc:d.acc||au.acc}});
+  const G=groups.map(g=>{const d={g,...(sec[g]||{})};const au=cardAuto(k,g,d);return {...d,outfit:tidy(d.fabric||au.outfit),acc:tidy(d.acc||au.acc)}});
   const forTxt=g=>'For the '+g.toLowerCase();
   const T=(txt,font,color,x,yy,draw,align='center')=>{ctx.font=font;ctx.textAlign=align;if(draw){ctx.fillStyle=color;ctx.fillText(txt,x,yy)}};
   const header=(y,draw)=>{
@@ -1693,16 +1695,17 @@ async function drawAso(k,cv){
     if(a.note){ctx.font='italic 28px Jost, sans-serif';for(const ln of wrapText(ctx,a.note,W-200).slice(0,2)){y+=46;T(ln,'italic 28px Jost, sans-serif',th.accent,W/2,y,draw)}}
     return y};
   const single=(y,draw)=>{y=header(y,draw);const d=G[0]||{};
-    const blk=(label,val,font,lh,max,color)=>{if(!val)return;y+=40;T(label,'500 21px Jost, sans-serif',th.faint,W/2,y,draw);ctx.font=font;for(const ln of wrapText(ctx,val,W-200).slice(0,max)){y+=lh;T(ln,font,color,W/2,y,draw)}};
-    blk('OUTFIT',d.outfit,'34px Jost, sans-serif',44,3,th.ink);blk('ACCESSORIES',d.acc,'30px Jost, sans-serif',40,3,th.ink);blk('PRICE',d.price,'60px Italiana, Georgia, serif',66,2,th.ink);
+    const blk=(label,val,font,lh,max,color)=>{if(!val)return;y+=40;if('letterSpacing' in ctx)ctx.letterSpacing='3px';T(label,'500 19px Jost, sans-serif',th.faint,W/2,y,draw);if('letterSpacing' in ctx)ctx.letterSpacing='0px';ctx.font=font;for(const ln of fitLines(ctx,val,W-240,max)){y+=lh;T(ln,font,color,W/2,y,draw)}};
+    blk('OUTFIT',d.outfit,'300 30px Jost, sans-serif',40,3,th.ink);blk('ACCESSORIES',d.acc,'300 25px Jost, sans-serif',34,3,th.muted);blk('PRICE',d.price,'60px Italiana, Georgia, serif',66,2,th.ink);
     return footerBits(y,draw)};
   const grid=(y,draw)=>{y=header(y,draw);
-    const n=G.length,cols=n<=3?n:2,rows=Math.ceil(n/cols),cw=(W-160)/cols;const fs=cols===3?24:28,as=cols===3?21:23,ps=cols===3?40:48;
+    const n=G.length,cols=n<=3?n:2,rows=Math.ceil(n/cols),cw=(W-160)/cols;const fs=cols===3?20:23,as=cols===3?17:19,ps=cols===3?36:42;
     for(let r=0;r<rows;r++){const y0=y;let yMax=y;
       for(let ci=0;ci<cols;ci++){const d=G[r*cols+ci];if(!d)continue;const x=80+cw*ci+cw/2;let yy=y0;
-        yy+=34;T(d.g.toUpperCase(),'500 21px Jost, sans-serif',th.accent,x,yy,draw);
-        if(d.outfit){ctx.font=fs+'px Jost, sans-serif';for(const ln of wrapText(ctx,d.outfit,cw-36).slice(0,3)){yy+=fs+10;T(ln,fs+'px Jost, sans-serif',th.ink,x,yy,draw)}}
-        if(d.acc){ctx.font=as+'px Jost, sans-serif';yy+=4;for(const ln of wrapText(ctx,d.acc,cw-36).slice(0,2)){yy+=as+9;T(ln,as+'px Jost, sans-serif',th.muted,x,yy,draw)}}
+        yy+=32;if('letterSpacing' in ctx)ctx.letterSpacing='3px';T(d.g.toUpperCase(),'500 18px Jost, sans-serif',th.accent,x,yy,draw);if('letterSpacing' in ctx)ctx.letterSpacing='0px';
+        const ofont='400 '+fs+'px Jost, sans-serif',afont='300 '+as+'px Jost, sans-serif',tw=cw-60;
+        if(d.outfit){ctx.font=ofont;yy+=4;for(const ln of fitLines(ctx,d.outfit,tw,3)){yy+=fs+8;T(ln,ofont,th.ink,x,yy,draw)}}
+        if(d.acc){ctx.font=afont;yy+=6;for(const ln of fitLines(ctx,d.acc,tw,3)){yy+=as+8;T(ln,afont,th.muted,x,yy,draw)}}
         if(d.price){ctx.font=ps+'px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,cw-36).slice(0,2)){yy+=ps+8;T(ln,ps+'px Italiana, Georgia, serif',th.ink,x,yy,draw)}}
         yMax=Math.max(yMax,yy)}
       if(draw){ctx.strokeStyle=th.faint;ctx.globalAlpha=.5;ctx.lineWidth=1.5;for(let ci=1;ci<cols;ci++){if(!G[r*cols+ci])continue;const x=80+cw*ci;ctx.beginPath();ctx.moveTo(x,y0+12);ctx.lineTo(x,yMax+6);ctx.stroke()}ctx.globalAlpha=1}
