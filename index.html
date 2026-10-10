@@ -340,6 +340,8 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .aso-sec .in,.aso-fields .in{width:100%;box-sizing:border-box}
 .aso-sec label{min-width:0;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .aso-view{margin-top:6px}
+.aso-prev{position:sticky;top:16px;align-self:start}
+@media (max-width:760px){.aso-prev{position:static}}
 .aso-prev canvas{width:100%;height:auto;display:block;box-shadow:var(--shadow);border-radius:4px}
 .aso-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 @media (max-width:760px){.aso-grid{grid-template-columns:1fr}}
@@ -825,6 +827,10 @@ function boardHTML(c){
 }
 function refreshBoard(){const w=$('#boardWrap');const c=CH.find(x=>x.id===S.active);if(w&&c){w.innerHTML=boardHTML(c);hydrate()}}
 const CARD_GROUPS=['Bride','Groom','Best man','Maid of honor','Bridesmaids','Groomsmen','Family','Ladies','Gentlemen'];
+function cardAuto(k,g,d){
+  const looks=byChapter(k);const l=(d&&d.pic&&looks.find(x=>(x.images||[]).includes(d.pic)))||looks.find(x=>(x.images||[]).some(im=>tagsOf(x,im).includes(g)))||looks.find(x=>x.who===g);
+  return {outfit:(l&&l.outfit)||'',acc:l?[l.accessories,l.shoes].filter(Boolean).join(', '):''};
+}
 function normAso(a){
   a=a||{};const sec={...(a.sec||{})};
   if(!sec.Ladies&&(a.ladies||a.fabric||a.price||a.pic))sec.Ladies=a.ladies||{fabric:a.fabric,price:a.price,pic:a.pic};
@@ -840,12 +846,14 @@ function asoebiHTML(c){
     const all=[...new Set(looks.flatMap(l=>(l.images||[]).map(im=>({im,hit:tagsOf(l,im).includes(g)||lookFor(l,g)}))).sort((x,y)=>y.hit-x.hit).map(x=>x.im))].slice(0,24);
     const list=cur&&!all.includes(cur)?[cur,...all]:all;
     return `<div class="aso-pics"><span class="mini">Picture idea</span><div><button type="button" class="aso-pic${!cur?' on':''}" data-ae-pic="${c.id}|${g}|"><span>None</span></button>${list.map(im=>`<button type="button" class="aso-pic${cur===im?' on':''}" data-ae-pic="${c.id}|${g}|${im}"><img ${imgAttr(im)} alt=""></button>`).join('')}<button type="button" class="aso-pic up" data-ae-up="${c.id}|${g}" aria-label="Upload a picture"><span>+ Upload</span></button></div></div>`};
-  const secHTML=g=>{const x=sec[g]||{};return `<fieldset class="aso-sec"><legend>${g}</legend>
-    <label>Outfit or fabric<input class="in" data-ae-g="${c.id}|${g}|fabric" value="${esc(x.fabric||'')}" placeholder="e.g. Wine lace with gold gele"></label>
+  const secHTML=g=>{const x=sec[g]||{};const au=cardAuto(c.id,g,x);return `<fieldset class="aso-sec"><legend>${g}</legend>
+    <label>Outfit<input class="in" data-ae-g="${c.id}|${g}|fabric" value="${esc(x.fabric||'')}" placeholder="${esc(au.outfit?'From the look: '+au.outfit:'e.g. Olive satin gown')}"></label>
+    <label>Accessories<input class="in" data-ae-g="${c.id}|${g}|acc" value="${esc(x.acc||'')}" placeholder="${esc(au.acc?'From the look: '+au.acc:'e.g. Pearl earrings, nude heels')}"></label>
     <label>Price (optional)<input class="in" data-ae-g="${c.id}|${g}|price" value="${esc(x.price||'')}" placeholder="e.g. ₦45,000 per set"></label>
     ${picker(g)}</fieldset>`};
   return `<details class="aso" ${a.open?'open':''}><summary><span>${c.name} outfit card</span><small>A shareable card with outfits, colors and prices for family and friends</small></summary>
   <div class="aso-grid"><div class="aso-fields">
+    <div><span class="mini">Card colors</span><div class="seg aso-view">${[['palette','From palette'],['soft','Soft white'],['dark','Dark']].map(([v,lab])=>`<button type="button" data-ae-theme="${c.id}|${v}" aria-pressed="${(a.theme||'palette')===v}">${lab}</button>`).join('')}</div></div>
     <div><span class="mini">Who is this card for? (up to 4)</span><div class="chips aso-groups">${CARD_GROUPS.map(g=>`<button type="button" class="vchip" data-ae-grp="${c.id}|${g}" aria-pressed="${groups.includes(g)}">${g}</button>`).join('')}</div></div>
     ${groups.map(secHTML).join('')||'<p class="muted" style="margin:0">Pick at least one person or group above.</p>'}
     <label>How to order<input class="in" data-ae="${c.id}|contact" value="${esc(a.contact||'')}" placeholder="e.g. Call Aunty Grace, 0803 123 4567"></label>
@@ -1104,6 +1112,7 @@ document.addEventListener('click',e=>{
   if(d.vedit){openVendor(d.vedit);return}
   if(d.pdfCh){exportPDF(t,d.pdfCh);return}
   if(d.aePic!==undefined){const [k,g,img]=d.aePic.split('|');changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);o.asoebi={...a,groups:n.groups,sec:{...n.sec,[g]:{...(n.sec[g]||{}),pic:img}},open:true}});return}
+  if(d.aeTheme){const [k,v]=d.aeTheme.split('|');changeMeta(k,o=>{o.asoebi={...(o.asoebi||{}),theme:v,open:true}});return}
   if(d.aeGrp){const [k,g]=d.aeGrp.split('|');const a0=(S.chapters[k]||{}).asoebi||{};const n0=normAso(a0);if(!n0.groups.includes(g)&&n0.groups.length>=4){toast('Up to 4 on one card. Make another card for the rest.');return}changeMeta(k,o=>{const a=o.asoebi||{};const n=normAso(a);const gs=n.groups.includes(g)?n.groups.filter(x=>x!==g):[...n.groups,g];o.asoebi={...a,groups:CARD_GROUPS.filter(x=>gs.includes(x)),sec:n.sec,open:true}});return}
   if(d.aeView){const [k,v]=d.aeView.split('|');changeMeta(k,o=>{o.asoebi={...(o.asoebi||{}),view:v,open:true}});return}
   if(d.aeUp){if(!folderId||!tokenOk()){toast('Sign in with Google to upload.');return}AE_UP=d.aeUp;$('#aeFile').click();return}
@@ -1492,57 +1501,98 @@ async function imgData(id,mode='full'){
     ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(bmp,0,0,cv.width,cv.height);
     return {data:cv.toDataURL('image/jpeg',.85),w:cv.width,h:cv.height}}catch{return null}
 }
+let pdfFonts=null;
+async function loadPdfFonts(doc){
+  if(!pdfFonts)pdfFonts=(async()=>{const files={JostL:'Jost-Light.ttf',Jost:'Jost-Regular.ttf',JostM:'Jost-Medium.ttf',Italiana:'Italiana-Regular.ttf'};const out={};
+    for(const [k,f] of Object.entries(files)){const r=await fetch(f);if(!r.ok)throw new Error('font');const u=new Uint8Array(await r.arrayBuffer());let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));out[k]={f,b64:btoa(bin)}}
+    return out})().catch(()=>{pdfFonts=null;return null});
+  const ff=await pdfFonts;if(!ff)return false;
+  for(const [k,{f,b64}] of Object.entries(ff)){doc.addFileToVFS(f,b64);doc.addFont(f,k,'normal')}return true;
+}
 async function exportPDF(btn,only){
   if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent='Preparing…';
   try{
     const {jsPDF}=await loadPdfLib();const doc=new jsPDF({unit:'mm',format:'a4'});
-    const PW=210,PH=297,M=16,GAP=8,CW=(PW-2*M-GAP)/2,ink=[34,28,34],mut=[122,113,120],line=[221,214,218];
-    const T=(txt,x,y,o={})=>{doc.setFont(o.font||'helvetica',o.style||'normal');doc.setFontSize(o.size||10);doc.setTextColor(...(o.color||ink));doc.text(txt,x,y,o.align?{align:o.align}:undefined)};
-    let firstPage=!!only;
+    const hasF=await loadPdfFonts(doc);
+    const F=hasF?{L:['JostL','normal'],R:['Jost','normal'],M:['JostM','normal'],D:['Italiana','normal']}:{L:['helvetica','normal'],R:['helvetica','normal'],M:['helvetica','bold'],D:['times','normal']};
+    const PW=210,PH=297,M=18,GAP=10,CW=(PW-2*M-GAP)/2;
+    const C={paper:[250,247,243],ink:[30,26,29],mut:[128,120,126],faint:[172,164,169],line:[228,222,216],mat:[255,255,255]};
+    const T=(txt,x,y,o={})=>{const f=F[o.f||'R'];doc.setFont(f[0],f[1]);doc.setFontSize(o.size||10);doc.setTextColor(...(o.color||C.ink));doc.setCharSpace(o.cs||0);doc.text(txt,x,y,o.align?{align:o.align}:undefined);doc.setCharSpace(0)};
+    const wrap=(txt,w,f,size)=>{const ff=F[f];doc.setFont(ff[0],ff[1]);doc.setFontSize(size);return doc.splitTextToSize(String(txt||''),w)};
+    const caps=(txt,x,y,o={})=>T(String(txt).toUpperCase(),x,y,{f:'M',size:o.size||7,color:o.color||C.mut,cs:o.cs!=null?o.cs:.35,align:o.align});
+    const pageBg=()=>{doc.setFillColor(...C.paper);doc.rect(0,0,PW,PH,'F')};
+    const hr=(x1,x2,y)=>{doc.setDrawColor(...C.line);doc.setLineWidth(.25);doc.line(x1,y,x2,y)};
+    const dot=(x,y,r,hex)=>{try{doc.setFillColor(...rgb(hex));doc.setDrawColor(...C.line);doc.setLineWidth(.2);doc.circle(x,y,r,'FD')}catch{}};
+    const palRow=(pal,x0,y,r=3.6,slot=22)=>{let mx=0;pal.slice(0,8).forEach((p,i)=>{const cx=x0+r+i*slot;dot(cx,y,r,p.hex);if(p.name){const ls=wrap(p.name,slot-2,'L',7).slice(0,2);ls.forEach((ln,j)=>T(ln,cx,y+r+4+j*3,{f:'L',size:7,color:C.mut,align:'center'}));mx=Math.max(mx,ls.length)}});return y+r+(mx?4+mx*3:2)};
+    let pageTitle='';
+    // ---------- cover ----------
+    pageBg();let firstPage=!!only;
     if(!only){
-    T('Bako & Made',M,48,{font:'times',size:40});
-    T('Our wedding looks',M,58,{color:mut,size:12});
-    let y=76;
-    const swRow=(pal,y0)=>{let yy=y0;pal.forEach((p,i)=>{const cx=M+(i%8)*22;if(i&&i%8===0)yy+=26;try{doc.setFillColor(...rgb(p.hex));doc.rect(cx,yy,18,18,'F')}catch{}if(p.name)T(doc.splitTextToSize(p.name,20)[0],cx,yy+22,{size:7,color:mut})});return yy+28};
-    if((S.overview.palette||[]).length){T('Our palette',M,y,{size:11,color:mut});y=swRow(S.overview.palette,y+4)+4}
-    T('Dates',M,y,{size:11,color:mut});y+=10;
-    CH.forEach(c=>{const m=S.chapters[c.id];doc.setFillColor(...rgb(c.color));doc.circle(M+2,y-1.3,1.8,'F');T(c.name,M+8,y,{size:12});T(fmtDate(m.date)||'Date not set',M+70,y,{size:10,color:mut});T(pm(chTotal(c.id)),PW-M,y,{size:12,align:'right'});doc.setDrawColor(...line);doc.line(M,y+4,PW-M,y+4);y+=12});
-    T('Total',M,y+8,{size:14});T(pm(grandTotal()),PW-M,y+8,{font:'times',size:22,align:'right'});
-    T('Designed by Casadeshells',M,PH-12,{size:8,color:mut});
+      caps('Wedding lookbook',M,44,{size:8,cs:.7});
+      T('Bako & Made',M,66,{f:'D',size:54});
+      const nextC=CH.map(c=>({c,n:daysUntil((S.chapters[c.id]||{}).date)})).filter(x=>x.n!=null&&x.n>=0).sort((a,b)=>a.n-b.n)[0];
+      T(nextC?`${nextC.n} days to the ${nextC.c.name.toLowerCase()}`:'Our looks for every ceremony',M,76,{f:'L',size:11,color:C.mut});
+      let y=96;
+      if((S.overview.palette||[]).length){caps('Our palette',M,y);y=palRow(S.overview.palette,M,y+9,4.2,24)+8}
+      caps('The ceremonies',M,y);y+=4;hr(M,PW-M,y);
+      CH.forEach(c=>{const m=S.chapters[c.id]||{};const n=byChapter(c.id).length;y+=11;
+        dot(M+2,y-2,1.8,c.color);T(c.name,M+8,y,{f:'D',size:17});
+        T(m.date?fmtDate(m.date):'Date to be set',M+8,y+5.5,{f:'L',size:8.5,color:C.mut});
+        T(`${n} ${n===1?'look':'looks'}`,PW-M-42,y,{f:'L',size:9,color:C.mut,align:'right'});
+        T(pm(chTotal(c.id)),PW-M,y,{f:'R',size:10.5,align:'right'});y+=9;hr(M,PW-M,y)});
+      y+=14;const all=[...S.looks.values()].filter(l=>l.chapter!=='inbox');const paid=all.reduce((a,l)=>a+lookPaid(l),0),owed=all.reduce((a,l)=>a+lookOwed(l),0);
+      caps('Total for all looks',M,y);T(pm(grandTotal()),M,y+11,{f:'D',size:26});
+      if(paid||owed){caps('Paid',PW-M-70,y);T(pm(paid),PW-M-70,y+8,{f:'R',size:11});caps('Still to pay',PW-M-30,y);T(pm(owed),PW-M-30,y+8,{f:'R',size:11})}
     }
-    // Ceremonies
+    // ---------- look card (measure or draw) ----------
+    const memo=new Map();const memoImg=(id,mode='full')=>{const k=id+mode;if(!memo.has(k))memo.set(k,imgData(id,mode));return memo.get(k)};
+    const card=async(l,x,y,draw,c)=>{
+      const pad=2.6,iw=CW-2*pad;let yy=y;
+      const im=l.images&&l.images[0]?await memoImg(l.images[0]):null;
+      let dh=0,dw=iw;if(im){dh=iw*im.h/im.w;const mx=CW*1.05;if(dh>mx){dh=mx;dw=mx*im.w/im.h}}
+      const extra=(l.images||[]).slice(1,5);const tw=(iw-3*2)/4;
+      const matH=im?pad+dh+(extra.length?2+tw+(extra.some(e=>tagOf(l,e))?4:0):0)+pad:0;
+      if(im){if(draw){doc.setFillColor(232,226,220);doc.rect(x+.6,yy+.8,CW,matH,'F');doc.setFillColor(...C.mat);doc.rect(x,yy,CW,matH,'F');doc.addImage(im.data,'JPEG',x+pad+(iw-dw)/2,yy+pad,dw,dh)}
+        if(extra.length){const ty=yy+pad+dh+2;for(let i=0;i<extra.length;i++){const tx=x+pad+i*(tw+2);if(draw){const d=await memoImg(extra[i],'square');if(d)doc.addImage(d.data,'JPEG',tx,ty,tw,tw);const tg=tagOf(l,extra[i]);if(tg)T(wrap(tg,tw+2,'L',5.6)[0],tx+tw/2,ty+tw+3,{f:'L',size:5.6,color:C.mut,align:'center'})}}}
+        yy+=matH+6}
+      const tl=wrap(l.title||'Untitled look',CW,'D',15).slice(0,2);tl.forEach((ln,i)=>{if(draw)T(ln,x,yy+i*6,{f:'D',size:15})});yy+=(tl.length-1)*6+4.5;
+      const meta=[l.who,l.status||'Idea'].filter(Boolean).join('  ·  ');if(draw)caps(meta,x,yy,{size:6.4,color:C.mut});yy+=3;
+      if((l.colors||[]).length){yy+=2.5;if(draw)l.colors.slice(0,8).forEach((h,i)=>dot(x+1.8+i*5.2,yy,1.8,h));yy+=3.5}
+      for(const [k,lab] of FIELDS){if(!l[k])continue;yy+=3.5;if(draw)caps(lab,x,yy,{size:5.8,color:C.faint});const ls=wrap(l[k],CW,'L',8.6);yy+=1;ls.forEach(ln=>{yy+=3.9;if(draw)T(ln,x,yy,{f:'L',size:8.6})});yy+=.6}
+      const t=lookTotal(l);
+      if(t){yy+=4;if(draw)hr(x,x+CW,yy);
+        for(const r of (l.costs||[]).filter(r=>num(r.amount))){yy+=4.4;if(draw){T(r.label||'Item',x,yy,{f:'L',size:8,color:C.mut});T(pm(num(r.amount))+(r.status==='paid'?'  paid':r.status==='deposit'?'  deposit':''),x+CW,yy,{f:'L',size:8,color:C.mut,align:'right'})}}
+        yy+=5.5;if(draw){caps('Total',x,yy,{size:6.4,color:C.ink});T(pm(t),x+CW,yy,{f:'M',size:10,align:'right'})}}
+      return yy+10;
+    };
+    const footer=()=>{T('Bako & Made',M,PH-10,{f:'D',size:9.5,color:C.mut});if(pageTitle)T(pageTitle,M+24,PH-10,{f:'L',size:7.5,color:C.faint});T('Designed by Casadeshells',PW-M,PH-10,{f:'L',size:7,color:C.faint,align:'right'})};
+    if(!only)footer();
+    // ---------- ceremonies ----------
     for(const c of CH){
       if(only&&c.id!==only)continue;
       const looks=byChapter(c.id);if(!looks.length&&!only)continue;
-      if(firstPage)firstPage=false;else doc.addPage();doc.setFillColor(...rgb(c.color));doc.rect(0,0,PW,4,'F');
-      T(c.name,M,26,{font:'times',size:28});T(cnote(c.id),M,34,{size:10,color:mut});T(pm(chTotal(c.id)),PW-M,26,{font:'times',size:16,align:'right'});
-      const cm=S.chapters[c.id];T(fmtDate(cm.date)||'Date not set',M,41,{size:10});
-      let top=48;(cm.palette||[]).forEach((p,i)=>{const cx=M+i*14;try{doc.setFillColor(...rgb(p.hex));doc.rect(cx,46,11,11,'F')}catch{}});if((cm.palette||[]).length)top=64;let col=[top,top];
+      if(firstPage)firstPage=false;else{doc.addPage();pageBg()}
+      pageTitle=c.name;const cm=S.chapters[c.id]||{};
+      doc.setFillColor(...rgb(c.color));doc.rect(M,22,14,1.1,'F');
+      caps(cm.date?fmtDate(cm.date):'Date to be set',M,31,{size:7.5,cs:.55});
+      T(c.name,M,46,{f:'D',size:34});
+      let y=53;const note=cnote(c.id);if(note){T(wrap(note,PW-2*M-50,'L',10)[0],M,y,{f:'L',size:10,color:C.mut});y+=5}
+      caps('Total',PW-M,31,{size:7,align:'right'});T(pm(chTotal(c.id)),PW-M,40,{f:'R',size:13,align:'right'});
+      if(num(cm.budget)){T(`of ${pm(num(cm.budget))} budget`,PW-M,45,{f:'L',size:7.5,color:C.mut,align:'right'})}
+      if((cm.palette||[]).length){y+=5;y=palRow(cm.palette,M,y+3,3.4,21)+2}
+      y+=4;hr(M,PW-M,y);y+=8;
+      const top=y;let col=[top,top];const bottom=PH-16;
       for(const l of looks){
-        const im=l.images&&l.images[0]?await imgData(l.images[0]):null;
-        const maxH=CW*1.4;let dw=CW,dh=CW*1.05;
-        if(im){dw=CW;dh=CW*im.h/im.w;if(dh>maxH){dh=maxH;dw=maxH*im.w/im.h}}
-        const imgH=dh;
-        const fl=FIELDS.filter(([k])=>l[k]).map(([k,lab])=>doc.splitTextToSize(lab+': '+l[k],CW));
-        const cl=(l.costs||[]).filter(r=>num(r.amount));
-        const h=imgH+12+((l.images||[]).length>1?(CW-6)/4+6:0)+((l.colors||[]).length?6:0)+fl.reduce((a,x)=>a+x.length*4,0)+cl.length*4.5+12;
+        const h=await card(l,0,0,false,c);
         let ci=col[0]<=col[1]?0:1;
-        if(col[ci]+h>PH-M){if(col[1-ci]+h<=PH-M)ci=1-ci;else{doc.addPage();doc.setFillColor(...rgb(c.color));doc.rect(0,0,PW,4,'F');col=[M+4,M+4];ci=0}}
-        const x=M+ci*(CW+GAP);let yy=col[ci];
-        if(im){if(dw<CW){doc.setFillColor(244,241,242);doc.rect(x,yy,CW,dh,'F')}doc.addImage(im.data,'JPEG',x+(CW-dw)/2,yy,dw,dh)}else{doc.setFillColor(240,237,238);doc.rect(x,yy,CW,imgH,'F')}
-        const extra=(l.images||[]).slice(1,5);
-        if(extra.length){yy+=imgH+2;const tw=(CW-6)/4;for(let i=0;i<extra.length;i++){const d=await imgData(extra[i],'square');const tx2=x+i*(tw+2);if(d)doc.addImage(d.data,'JPEG',tx2,yy,tw,tw);const tg=tagOf(l,extra[i]);if(tg)T(doc.splitTextToSize(tg,tw+1)[0],tx2+tw/2,yy+tw+3.5,{size:6.5,color:mut,align:'center'})}yy+=tw+6-imgH-2}
-        yy+=imgH+6;T(doc.splitTextToSize(l.title||'Untitled look',CW-28)[0],x,yy,{font:'times',size:14});T([l.who,l.status||'Idea'].filter(Boolean).join(', '),x+CW,yy,{size:8,color:mut,align:'right'});yy+=5;
-        if((l.colors||[]).length){(l.colors).forEach((s,i)=>{try{doc.setFillColor(...rgb(s));doc.circle(x+2+i*6,yy,2,'F')}catch{}});yy+=6}
-        doc.setFontSize(8.5);fl.forEach(ls=>{T(ls,x,yy+1,{size:8.5});yy+=ls.length*4});
-        cl.forEach(r=>{yy+=0.5;T(r.label||'Item',x,yy+3,{size:8.5,color:mut});T(pm(num(r.amount)),x+CW,yy+3,{size:8.5,color:mut,align:'right'});yy+=4});
-        doc.setDrawColor(...line);doc.line(x,yy+3,x+CW,yy+3);T('Look total',x,yy+8,{size:9});T(pm(lookTotal(l)),x+CW,yy+8,{size:11,align:'right'});
-        col[ci]=yy+18;
+        if(col[ci]+h>bottom){if(col[1-ci]+h<=bottom)ci=1-ci;else{footer();doc.addPage();pageBg();doc.setFillColor(...rgb(c.color));doc.rect(M,16,14,1.1,'F');caps(c.name,M,24,{size:7,cs:.55});col=[32,32];ci=0}}
+        const x=M+ci*(CW+GAP);col[ci]=await card(l,x,col[ci],true,c);
       }
+      footer();
     }
-    const blob=doc.output('blob');const name=only?`wedding-looks-${only}.pdf`:'wedding-looks.pdf';
+    const blob=doc.output('blob');const name=only?`${(CH.find(x=>x.id===only)||{name:only}).name.replace(/\s+/g,'-')}-looks.pdf`:'Bako-and-Made-wedding-looks.pdf';
     {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
-  }catch(e){toast('PDF export failed. Check your connection.')}
+  }catch(e){console.error(e);toast('PDF export failed. Check your connection.')}
   finally{btn.disabled=false;btn.textContent=old}
 }
 
@@ -1599,55 +1649,79 @@ document.addEventListener('pointerup',endDrag);document.addEventListener('pointe
 function wrapText(ctx,text,maxW){const words=String(text||'').split(/\s+/);const lines=[];let cur='';for(const w of words){const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t}if(cur)lines.push(cur);return lines}
 async function loadBmp(id){if(!id)return null;try{const u=await ensureImg(id);if(!u)return null;return await createImageBitmap(await (await fetch(u)).blob())}catch{return null}}
 function coverDraw(ctx,bmp,x,y,w,h){const sc=Math.max(w/bmp.width,h/bmp.height);ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.drawImage(bmp,x+(w-bmp.width*sc)/2,y+(h-bmp.height*sc)/2,bmp.width*sc,bmp.height*sc);ctx.restore()}
+const hexRgb=h=>{h=normHex(h)||'#000000';return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16))};
+const rgbHex=a=>'#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const lumOf=h=>{const [r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*b};
+const satOf=h=>{const [r,g,b]=hexRgb(h);const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx?(mx-mn)/mx:0};
+const mixHex=(a,b,t)=>{const x=hexRgb(a),y=hexRgb(b);return rgbHex(x.map((v,i)=>v+(y[i]-v)*t))};
+const contrastOf=(a,b)=>{const l1=lumOf(a),l2=lumOf(b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)};
+function cardTheme(pal,mode){
+  const hs=pal.map(p=>normHex(p.hex)).filter(Boolean);const by=[...hs].sort((a,b)=>lumOf(a)-lumOf(b));
+  const darkest=by[0]||'#221C22',lightest=by[by.length-1]||'#F7F3EF';
+  let acc=[...hs].filter(h=>lumOf(h)>.02&&lumOf(h)<.75).sort((a,b)=>satOf(b)-satOf(a))[0]||darkest;
+  let t;
+  if(mode==='dark'){const bg=lumOf(darkest)<.04?darkest:mixHex(darkest,'#000000',.55);t={bg,ink:'#FBF8F3',muted:'#CFC8C2',faint:'#9C958F'};
+    let a2=[...hs].filter(h=>contrastOf(h,bg)>3).sort((a,b)=>satOf(b)-satOf(a))[0]||lightest;t.accent=contrastOf(a2,bg)>3?a2:'#E9DCC3'}
+  else{const tint=[...by].filter(h=>lumOf(h)<.9&&lumOf(h)>.25).pop()||lightest;const bg=mode==='soft'?'#FBFAF8':mixHex(tint,'#FFFFFF',.78);
+    const ink=lumOf(darkest)<.06&&contrastOf(darkest,bg)>9?darkest:'#1E1A1D';t={bg,ink,muted:mixHex(ink,bg,.42),faint:mixHex(ink,bg,.6)};
+    let a2=acc;let i=0;while(contrastOf(a2,bg)<3.2&&i<8){a2=mixHex(a2,'#000000',.18);i++}t.accent=a2}
+  t.band=t.accent;return t;
+}
 async function drawAso(k,cv){
   cv=cv||$('#aeCanvas');if(!cv)return null;const ctx=cv.getContext('2d');const W=1080,H=1350;
   const c=CH.find(x=>x.id===k);const m=S.chapters[k]||{};const a=m.asoebi||{};const pal=(m.palette||[]).length?m.palette:(S.overview.palette||[]);
   try{await Promise.all([document.fonts.load('80px Italiana'),document.fonts.load('32px Jost'),document.fonts.load('500 32px Jost')])}catch{}
-  const accent=(pal[0]&&pal[0].hex)||c.color;const {groups,sec}=normAso(a);
-  const G=groups.map(g=>({g,...(sec[g]||{})}));
+  const th=cardTheme(pal,a.theme||'palette');const {groups,sec}=normAso(a);
+  const G=groups.map(g=>{const d={g,...(sec[g]||{})};const au=cardAuto(k,g,d);return {...d,outfit:d.fabric||au.outfit,acc:d.acc||au.acc}});
   const forTxt=g=>'For the '+g.toLowerCase();
   const T=(txt,font,color,x,yy,draw,align='center')=>{ctx.font=font;ctx.textAlign=align;if(draw){ctx.fillStyle=color;ctx.fillText(txt,x,yy)}};
   const header=(y,draw)=>{
     const sub=G.length===1?`${c.name} outfit  ·  ${forTxt(G[0].g)}`:`${c.name} outfit`;
-    y+=66;if('letterSpacing' in ctx)ctx.letterSpacing='4px';T(sub.toUpperCase(),'500 24px Jost, sans-serif','#7A7178',W/2,y,draw);if('letterSpacing' in ctx)ctx.letterSpacing='0px';
-    y+=86;T('Bako & Made','90px Italiana, Georgia, serif','#221C22',W/2,y,draw);
-    if(m.date){y+=56;T(fmtDate(m.date),'32px Jost, sans-serif','#4a434a',W/2,y,draw)}y+=44;
-    if(pal.length){const r=24,gap=38,ps=pal.slice(0,6),tw=ps.length*(2*r)+(ps.length-1)*gap;let x=(W-tw)/2+r;
-      if(draw)for(const p of ps){ctx.fillStyle=p.hex;ctx.beginPath();ctx.arc(x,y+r,r,0,7);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=2;ctx.stroke();if(p.name){T(p.name,'21px Jost, sans-serif','#7A7178',x,y+2*r+28,true)}x+=2*r+gap}
-      y+=2*r+(ps.some(p=>p.name)?40:8)}
+    y+=66;if('letterSpacing' in ctx)ctx.letterSpacing='4px';T(sub.toUpperCase(),'500 24px Jost, sans-serif',th.muted,W/2,y,draw);if('letterSpacing' in ctx)ctx.letterSpacing='0px';
+    y+=86;T('Bako & Made','90px Italiana, Georgia, serif',th.ink,W/2,y,draw);
+    if(m.date){y+=56;T(fmtDate(m.date),'32px Jost, sans-serif',th.muted,W/2,y,draw)}y+=44;
+    const ps=pal.slice(0,6);
+    if(ps.length){const r=24;ctx.font='21px Jost, sans-serif';const maxW=W-140;
+      const lines=ps.map(p=>p.name?wrapText(ctx,p.name,Math.min(170,maxW/ps.length-14)).slice(0,2):[]);
+      const slot=Math.min(maxW/ps.length,Math.max(2*r+40,...lines.flat().map(t=>ctx.measureText(t).width+24)));
+      let x=W/2-slot*(ps.length-1)/2;
+      if(draw)ps.forEach((p,i)=>{ctx.fillStyle=p.hex;ctx.beginPath();ctx.arc(x,y+r,r,0,7);ctx.fill();ctx.strokeStyle=th.faint;ctx.lineWidth=1.5;ctx.stroke();lines[i].forEach((ln,j)=>T(ln,'21px Jost, sans-serif',th.muted,x,y+2*r+28+j*24,true));x+=slot});
+      const nl=Math.max(0,...lines.map(l=>l.length));y+=2*r+(nl?16+nl*24:8)}
     return y};
   const footerBits=(y,draw)=>{
-    if(a.contact){y+=44;T('HOW TO ORDER','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='32px Jost, sans-serif';for(const ln of wrapText(ctx,a.contact,W-200).slice(0,2)){y+=42;T(ln,'32px Jost, sans-serif','#221C22',W/2,y,draw)}}
-    if(a.note){ctx.font='italic 28px Jost, sans-serif';for(const ln of wrapText(ctx,a.note,W-200).slice(0,2)){y+=46;T(ln,'italic 28px Jost, sans-serif','#7A2E3A',W/2,y,draw)}}
+    if(a.contact){y+=44;T('HOW TO ORDER','500 21px Jost, sans-serif',th.faint,W/2,y,draw);ctx.font='32px Jost, sans-serif';for(const ln of wrapText(ctx,a.contact,W-200).slice(0,2)){y+=42;T(ln,'32px Jost, sans-serif',th.ink,W/2,y,draw)}}
+    if(a.note){ctx.font='italic 28px Jost, sans-serif';for(const ln of wrapText(ctx,a.note,W-200).slice(0,2)){y+=46;T(ln,'italic 28px Jost, sans-serif',th.accent,W/2,y,draw)}}
     return y};
   const single=(y,draw)=>{y=header(y,draw);const d=G[0]||{};
-    if(d.fabric){y+=40;T('OUTFIT','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='34px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,W-200).slice(0,3)){y+=44;T(ln,'34px Jost, sans-serif','#221C22',W/2,y,draw)}}
-    if(d.price){y+=40;T('PRICE','500 21px Jost, sans-serif','#9a9198',W/2,y,draw);ctx.font='60px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,W-200).slice(0,2)){y+=66;T(ln,'60px Italiana, Georgia, serif','#221C22',W/2,y,draw)}}
+    const blk=(label,val,font,lh,max,color)=>{if(!val)return;y+=40;T(label,'500 21px Jost, sans-serif',th.faint,W/2,y,draw);ctx.font=font;for(const ln of wrapText(ctx,val,W-200).slice(0,max)){y+=lh;T(ln,font,color,W/2,y,draw)}};
+    blk('OUTFIT',d.outfit,'34px Jost, sans-serif',44,3,th.ink);blk('ACCESSORIES',d.acc,'30px Jost, sans-serif',40,3,th.ink);blk('PRICE',d.price,'60px Italiana, Georgia, serif',66,2,th.ink);
     return footerBits(y,draw)};
   const grid=(y,draw)=>{y=header(y,draw);
-    const n=G.length,cols=n<=3?n:2,rows=Math.ceil(n/cols),cw=(W-160)/cols;const fs=cols===3?25:29,ps=cols===3?40:50;
+    const n=G.length,cols=n<=3?n:2,rows=Math.ceil(n/cols),cw=(W-160)/cols;const fs=cols===3?24:28,as=cols===3?21:23,ps=cols===3?40:48;
     for(let r=0;r<rows;r++){const y0=y;let yMax=y;
       for(let ci=0;ci<cols;ci++){const d=G[r*cols+ci];if(!d)continue;const x=80+cw*ci+cw/2;let yy=y0;
-        yy+=36;T(d.g.toUpperCase(),'500 21px Jost, sans-serif',accent,x,yy,draw);
-        if(d.fabric){ctx.font=fs+'px Jost, sans-serif';for(const ln of wrapText(ctx,d.fabric,cw-36).slice(0,3)){yy+=fs+11;T(ln,fs+'px Jost, sans-serif','#221C22',x,yy,draw)}}
-        if(d.price){ctx.font=ps+'px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,cw-36).slice(0,2)){yy+=ps+8;T(ln,ps+'px Italiana, Georgia, serif','#221C22',x,yy,draw)}}
+        yy+=34;T(d.g.toUpperCase(),'500 21px Jost, sans-serif',th.accent,x,yy,draw);
+        if(d.outfit){ctx.font=fs+'px Jost, sans-serif';for(const ln of wrapText(ctx,d.outfit,cw-36).slice(0,3)){yy+=fs+10;T(ln,fs+'px Jost, sans-serif',th.ink,x,yy,draw)}}
+        if(d.acc){ctx.font=as+'px Jost, sans-serif';yy+=4;for(const ln of wrapText(ctx,d.acc,cw-36).slice(0,2)){yy+=as+9;T(ln,as+'px Jost, sans-serif',th.muted,x,yy,draw)}}
+        if(d.price){ctx.font=ps+'px Italiana, Georgia, serif';for(const ln of wrapText(ctx,d.price,cw-36).slice(0,2)){yy+=ps+8;T(ln,ps+'px Italiana, Georgia, serif',th.ink,x,yy,draw)}}
         yMax=Math.max(yMax,yy)}
-      if(draw){ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=2;for(let ci=1;ci<cols;ci++){if(!G[r*cols+ci])continue;const x=80+cw*ci;ctx.beginPath();ctx.moveTo(x,y0+14);ctx.lineTo(x,yMax+6);ctx.stroke()}}
-      y=yMax+(r<rows-1?18:0)}
+      if(draw){ctx.strokeStyle=th.faint;ctx.globalAlpha=.5;ctx.lineWidth=1.5;for(let ci=1;ci<cols;ci++){if(!G[r*cols+ci])continue;const x=80+cw*ci;ctx.beginPath();ctx.moveTo(x,y0+12);ctx.lineTo(x,yMax+6);ctx.stroke()}ctx.globalAlpha=1}
+      y=yMax+(r<rows-1?22:0)}
     return footerBits(y+10,draw)};
   const painter=G.length<=1?single:grid;
   const contentH=painter(0,false)+40,footer=64;
   const shown=G.length?G:[{g:''}];
   const bmps=await Promise.all(shown.map(d=>loadBmp(d.pic)));const anyPic=bmps.some(Boolean);
-  const room=H-footer-contentH-10;const top=anyPic?Math.max(220,Math.min(620,room)):Math.max(110,Math.min(200,room));
-  ctx.fillStyle='#F7F3EF';ctx.fillRect(0,0,W,H);
-  const n=shown.length,gap=n>1?8:0,pw=(W-gap*(n-1))/n;
+  const room=H-footer-contentH-10;const top=anyPic?Math.max(220,Math.min(720,room)):Math.max(110,Math.min(200,room));
+  ctx.fillStyle=th.bg;ctx.fillRect(0,0,W,H);
+  const n=shown.length,gap=n>1?6:0,pw=(W-gap*(n-1))/n;
   shown.forEach((d,i)=>{const x=i*(pw+gap);const b=bmps[i];
-    if(b)coverDraw(ctx,b,x,0,pw,top);else{const p=pal[i%Math.max(1,pal.length)];ctx.fillStyle=p?p.hex:accent;ctx.fillRect(x,0,pw,top)}
-    if(n>1&&anyPic&&d.g){ctx.font=`500 ${n>3?20:24}px Jost, sans-serif`;const tw=ctx.measureText(d.g).width+32;ctx.fillStyle='rgba(247,243,239,.92)';const bx=x+14,by=top-54;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,Math.min(tw,pw-28),38,19):ctx.rect(bx,by,Math.min(tw,pw-28),38);ctx.fill();ctx.fillStyle='#221C22';ctx.textAlign='left';ctx.fillText(d.g,bx+16,by+26)}});
-  ctx.fillStyle=accent;ctx.fillRect(0,top,W,10);
-  const used=painter(top+10,true);
-  ctx.textAlign='center';ctx.fillStyle='#b0a7ae';ctx.font='20px Jost, sans-serif';ctx.fillText('Designed by Casadeshells',W/2,Math.max(used+46,H-32));
+    if(b)coverDraw(ctx,b,x,0,pw,top);else{const p=pal[i%Math.max(1,pal.length)];ctx.fillStyle=p?p.hex:th.accent;ctx.fillRect(x,0,pw,top)}
+    if(n>1&&anyPic&&d.g){ctx.font=`500 ${n>3?20:24}px Jost, sans-serif`;const tw=ctx.measureText(d.g).width+32;const [r1,g1,b1]=hexRgb(th.bg);ctx.fillStyle=`rgba(${r1},${g1},${b1},.92)`;const bx=x+14,by=top-54;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,Math.min(tw,pw-28),38,19):ctx.rect(bx,by,Math.min(tw,pw-28),38);ctx.fill();ctx.fillStyle=th.ink;ctx.textAlign='left';ctx.fillText(d.g,bx+16,by+26)}});
+  if(n>1){ctx.fillStyle=th.bg;for(let i=1;i<n;i++)ctx.fillRect(i*(pw+gap)-gap,0,gap,top)}
+  ctx.fillStyle=th.band;ctx.fillRect(0,top,W,6);
+  const used=painter(top+6,true);
+  ctx.textAlign='center';ctx.fillStyle=th.faint;ctx.font='20px Jost, sans-serif';ctx.fillText('Designed by Casadeshells',W/2,Math.max(used+46,H-32));
   return cv;
 }
 async function asoCard(k,mode){
