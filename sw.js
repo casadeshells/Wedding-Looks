@@ -14,9 +14,7 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // Google sign-in, Drive and the AI helper always go to the network
   if (url.hostname.endsWith('googleapis.com') || url.hostname.endsWith('google.com') || url.hostname.endsWith('workers.dev')) return;
-  // The app itself: newest version when online, saved copy when offline
   if (req.mode === 'navigate' || url.origin === self.location.origin) {
     e.respondWith(
       fetch(req)
@@ -25,7 +23,6 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  // Fonts and the PDF library: saved copy first, refreshed in the background
   if (/fonts\.(googleapis|gstatic)\.com$|cdnjs\.cloudflare\.com$/.test(url.hostname)) {
     e.respondWith(
       caches.open(CACHE).then(async (c) => {
