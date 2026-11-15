@@ -262,13 +262,13 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .rtile{background:var(--mat);box-shadow:var(--shadow);padding:11px 15px;min-width:148px;max-width:270px}
 .rtile span{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
 .rtile b{font-weight:400;font-size:15px;line-height:1.4}
-.prow{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px}
+.prow{display:grid;grid-template-columns:34px minmax(150px,1fr) minmax(0,1.6fr);gap:12px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 6px}
 .prow:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .pav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 24%,var(--mat));font-family:var(--display);font-size:16px}
 .pmain{display:flex;flex-direction:column;gap:1px;min-width:0}
 .prow .pname{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pph{font-size:13px;color:var(--muted)}
-.ptags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:58%}
+.ptags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;min-width:0}
 .pduty{font-size:11px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--gold) 20%,var(--mat));white-space:nowrap}
 @media (max-width:700px){.prow{grid-template-columns:34px minmax(0,1fr);row-gap:6px}.ptags{grid-column:2;justify-content:flex-start;max-width:none}}
 
@@ -332,10 +332,10 @@ body.hidecosts .cap-foot,body.hidecosts .vfoot{justify-content:flex-end}
   .col{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
   body .ai-fab{bottom:calc(78px + env(safe-area-inset-bottom,0px));right:calc(14px + env(safe-area-inset-right,0px))}
   .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-  .looktabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-10px -18px 20px;padding:2px 18px 6px}
+  .looktabs{display:flex;flex-wrap:wrap;gap:5px;margin:-8px 0 18px}
   .looktabs::-webkit-scrollbar{display:none}
-  .looktabs button{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--mat);border-radius:999px;padding:7px 13px;font-size:13.5px;white-space:nowrap}
-  .looktabs button .dot{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}
+  .looktabs button{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--mat);border-radius:999px;padding:4px 9px;font-size:12px;line-height:1.3;white-space:nowrap}
+  .looktabs button .dot{width:6px;height:6px;border-radius:50%;background:var(--c);display:inline-block}
   .looktabs button[aria-current="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .side .side-foot{display:block;text-align:left;margin-top:18px}
   .side .cur{justify-content:flex-start;margin-top:10px}
@@ -400,6 +400,54 @@ body.hidecosts .ck{grid-template-columns:22px 1fr 24px}
   .frow{grid-template-columns:22px minmax(0,1fr) 104px 22px}.frow [data-rf="note"]{grid-column:2/4;grid-row:2;font-size:14px!important}
   .tabs2{margin-top:-6px}
 }
+.isecs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:980px;align-items:start}
+.isecs>.empty{grid-column:1/-1}
+.isec{max-width:none;margin:0;border:0;background:var(--mat);box-shadow:var(--shadow);border-radius:8px}
+.isec[open]{grid-column:1/-1}
+.isec summary{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:14px 16px;align-items:baseline}
+.isec summary .isn{font-family:var(--display);font-size:21px}
+.isec summary .isn::after{content:" +";font-family:var(--body);font-size:15px;color:var(--muted)}
+.isec[open] summary .isn::after{content:" −"}
+.isec summary span::after{content:none}
+.ibar{grid-column:1/-1;height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden;margin-top:4px}
+.ibar b{display:block;height:100%;background:var(--accent)}
+.irows{padding:0 16px 10px}
+.iall{margin:-14px 0 16px;font-size:13px}
+.vgroup{margin-bottom:34px}
+.vgh{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 14px;display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.vgh small{font-family:var(--body);font-size:13px;color:var(--muted)}
+.cbox{max-width:920px;background:var(--mat);box-shadow:var(--shadow);border-radius:8px;padding:0 18px;margin:0 0 30px}
+.cbox summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;flex-wrap:wrap}
+.cbox summary::-webkit-details-marker{display:none}
+.cbox summary span{font-family:var(--display);font-size:22px}
+.cbox summary small{color:var(--muted);font-size:13px}
+.cbox[open]{padding-bottom:16px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cgrid label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.cpill{font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.cpill.paid{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cpill.owes{border-color:#B4413C;color:#B4413C}
+.plk{border-color:var(--gold)!important}
+.srch-btn{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--line);background:var(--mat);border-radius:999px;padding:8px 14px;font-size:13.5px;color:var(--muted);margin:-14px 0 18px;text-align:left}
+.srch-btn:hover{border-color:var(--ink);color:var(--ink)}
+.mb-search{flex:0 0 auto;width:38px;height:38px;border-radius:8px;border:0;background:none;color:var(--ink);display:grid;place-items:center;padding:0}
+.cp.srbox{top:8vh;transform:translateX(-50%);width:min(620px,calc(100vw - 24px));max-height:84vh;display:flex;flex-direction:column;padding:16px}
+.cp.srbox[hidden]{display:none}
+.sr-top{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.sr-top .in{font-size:16px;padding:10px 14px;border-radius:999px}
+.sr-res{overflow-y:auto;min-height:60px}
+.sr-g{margin-bottom:14px}
+.sr-g h3{font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);margin:0 0 4px;display:flex;gap:6px;letter-spacing:.03em}
+.sr-g h3 small{font-weight:300}
+.sr-g button{display:flex;flex-direction:column;gap:1px;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px}
+.sr-g button:hover,.sr-g button:focus-visible{background:var(--mat)}
+.sr-g button b{font-weight:400;font-size:15.5px}
+.sr-g button span{font-size:12.5px;color:var(--muted)}
+.flash{animation:flash 1.6s ease}
+@keyframes flash{0%,60%{background:color-mix(in srgb,var(--gold) 28%,transparent)}100%{background:transparent}}
+@media (max-width:700px){.isecs{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr}.cp.srbox{top:10px;max-height:calc(100vh - 20px)}
+  .prow{grid-template-columns:34px minmax(0,1fr)}.prow .ptags{grid-column:2;justify-content:flex-start}}
+@media (max-width:860px){.side .srch-btn{margin:10px 0 6px}}
 /* ---- v2 features ---- */
 .note-in{display:block;width:100%;max-width:62ch;border:0;border-left:2px solid var(--c);background:transparent;font:inherit;font-size:15px;color:var(--muted);padding:2px 0 2px 14px;margin:18px 0 0}
 .note-in:hover{color:var(--ink)}
@@ -750,6 +798,7 @@ body.ai-open .ai-fab,body.dr-open .ai-fab{display:none}
       <div>
         <p class="mark">Bako &amp; Made</p>
         <p class="mark-sub">Our wedding planner</p>
+        <button class="srch-btn" data-search><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Search everything</button>
       </div>
       <div class="side-foot" id="sideFootMobile"></div>
     </div>
@@ -784,6 +833,11 @@ body.ai-open .ai-fab,body.dr-open .ai-fab{display:none}
   <div class="ai-chips" id="aiChips"></div>
   <form class="ai-form" id="aiForm"><textarea id="aiIn" class="in" rows="1" placeholder="Ask about outfits, colors, budget…" aria-label="Message"></textarea><button class="btn primary" id="aiSend" type="submit">Send</button></form>
 </aside>
+<div class="cp-scrim" id="srScrim"></div>
+<div class="cp srbox" id="sr" role="dialog" aria-modal="true" aria-label="Search" hidden>
+  <div class="sr-top"><input id="srIn" class="in" type="search" placeholder="Search looks, plan, people, vendors, tasks…" autocomplete="off"><button type="button" class="btn small ghost" id="srClose">Close</button></div>
+  <div class="sr-res" id="srRes"></div>
+</div>
 <div class="cp-scrim" id="ppScrim"></div>
 <div class="cp" id="pp" role="dialog" aria-modal="true" aria-labelledby="ppTitle" hidden>
   <h2 id="ppTitle">Colors from your picture</h2>
@@ -850,6 +904,15 @@ try{S.noCosts=localStorage.getItem('wl-nocosts')==='1'}catch{}
 const custom=()=>S.plan.custom||(S.plan.custom={duties:[],roles:[]});
 const allDuties=()=>[...new Set([...PDUTY,...(custom().duties||[]),...Object.values(S.people).flatMap(p=>p.duties||[])])];
 const allRoles=()=>[...new Set([...PROLE,...(custom().roles||[]),...Object.values(S.people).map(p=>p.role).filter(Boolean)])];
+const ROLEGROUP={'Bride':['Bride'],'Groom':['Groom'],'Best man':['Best man'],'Maid of honor':['Maid of honor'],'Chief bridesmaid':['Maid of honor','Bridesmaids'],'Groomsman':['Groomsmen'],'Bridesmaid':['Bridesmaids'],'Little bride':['Bridesmaids'],'Parent':['Family'],'Family':['Family']};
+const looksForPerson=p=>{const gs=ROLEGROUP[p.role]||[];return gs.length?CH.flatMap(c=>byChapter(c.id).filter(l=>gs.some(g=>l.who===g||(l.images||[]).some(im=>tagsOf(l,im).includes(g)))).map(l=>({l,c}))):[]};
+const peopleForGroup=g=>pAll().filter(p=>(ROLEGROUP[p.role]||[]).includes(g));
+const peopleForLook=l=>{const gs=new Set([l.who,...(l.images||[]).flatMap(im=>tagsOf(l,im))]);return pAll().filter(p=>(ROLEGROUP[p.role]||[]).some(g=>gs.has(g)))};
+const MENR=['Best man','Groomsman'],WOMR=['Maid of honor','Chief bridesmaid','Bridesmaid'];
+const cDue=p=>p.contrib!==undefined&&p.contrib!==''?num(p.contrib):num((S.plan.contrib||{})[MENR.includes(p.role)?'men':WOMR.includes(p.role)?'women':'-']);
+const cPaid=p=>num(p.contribPaid),cOwes=p=>Math.max(0,cDue(p)-cPaid(p));
+const cTotals=()=>{const a=pAll().filter(p=>cDue(p)>0);return {n:a.length,paidN:a.filter(p=>!cOwes(p)).length,due:a.reduce((x,p)=>x+cDue(p),0),got:a.reduce((x,p)=>x+Math.min(cDue(p),cPaid(p)),0),owing:a.filter(p=>cOwes(p))}};
+const vByCat=()=>{const a=vAll();const ix=c=>{const i=VCAT.indexOf(c);return i<0?999:i};return a.sort((x,y)=>ix(vCat(x))-ix(vCat(y))||vCat(x).localeCompare(vCat(y))||(x.name||'').localeCompare(y.name||''))};
 const pAll=()=>Object.entries(S.people).map(([id,p])=>({id,...p})).sort((a,b)=>(a.order||0)-(b.order||0));
 const vAll=()=>Object.entries(S.vendors).map(([id,v])=>({id,...v})).sort((a,b)=>(a.order||0)-(b.order||0)||(a.name||'').localeCompare(b.name||''));
 const tAll=()=>Object.entries(S.tasks).map(([id,t])=>({id,...t}));
@@ -951,7 +1014,7 @@ function renderSide(){
   const on=(S.peers||[]).some(p=>p.online);
   $('#mbar').innerHTML=`<button class="hamb" data-menu aria-label="Open menu" aria-expanded="${document.body.classList.contains('nav-open')}"><span></span><span></span><span></span>${on?'<i class="hamb-dot" title="Your partner is online"></i>':nn?'<i class="hamb-dot alert" title="New activity"></i>':''}</button>
     <button class="mb-title" data-menu><span class="dot" style="--c:${cur.color}"></span><span>${esc(cur.name)}</span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
-    <span class="mb-total">${money(committed())}</span>`;
+    <button class="mb-search" data-search aria-label="Search"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button><span class="mb-total">${money(committed())}</span>`;
 }
 
 function cardHTML(l,i){
@@ -1004,6 +1067,7 @@ function personHTML(){
   const items=S.person?personItems(S.person):[];
   return `<section class="ov ov-wide"><h2 class="sub-h">Outfits by person</h2>
   <div class="pchips" role="tablist">${TAGS.map(t=>{const n=personItems(t).length;return `<button role="tab" data-person="${t}" aria-selected="${S.person===t}" class="${n?'':'zero'}">${t}<span>${n}</span></button>`}).join('')}</div>
+  ${S.person&&peopleForGroup(S.person).length?`<p class="muted" style="margin:0 0 14px;font-size:14px">In your team: ${peopleForGroup(S.person).map(x=>esc(x.name||'Unnamed')).join(', ')}</p>`:''}
   ${!S.person?'':items.length?`<div class="pgrid">${items.map(({l,c,img,idx})=>miniCard(l,c,img,idx)).join('')}</div>`:`<p class="muted">No outfits for ${esc(S.person)} yet. Tag pictures or set a look's "For" to ${esc(S.person)}.</p>`}
   </section>`;
 }
@@ -1089,10 +1153,11 @@ function vendorsHTML(){
   const all=vAll();
   const q=all.reduce((a,v)=>a+vQuote(v),0),p=all.reduce((a,v)=>a+vPaid(v),0);
   const booked=all.filter(v=>['Booked','Paid','Done'].includes(v.status)).length;
-  const used=[...new Set(all.map(vCat))];
+  const used=[...new Set(vByCat().map(vCat))];
   const show=S.vfilter==='all'?all:all.filter(v=>vCat(v)===S.vfilter);
   const chips=all.length?`<div class="vfilters"><button data-vfilter="all" aria-pressed="${S.vfilter==='all'}">Everyone ${all.length}</button>${used.map(c=>`<button data-vfilter="${esc(c)}" aria-pressed="${S.vfilter===c}">${esc(c)}</button>`).join('')}</div>`:'';
-  const grid=show.length?`<div class="vgrid">${show.map(vcardHTML).join('')}</div>`:`<div class="empty"><p>${all.length?'Nobody in this category yet.':'No vendors yet. Add the first one.'}</p>${S.canWrite?'<button class="btn primary" data-vnewp>Add vendor</button>':''}</div>`;
+  const cats=[...new Set(vByCat().map(vCat))];
+  const grid=show.length?(S.vfilter==='all'&&cats.length>1?cats.map(c=>{const vs=vByCat().filter(v=>vCat(v)===c);return `<section class="vgroup"><h2 class="vgh">${esc(c)}<small>${vs.length}</small></h2><div class="vgrid">${vs.map(vcardHTML).join('')}</div></section>`}).join(''):`<div class="vgrid">${show.map(vcardHTML).join('')}</div>`):`<div class="empty"><p>${all.length?'Nobody in this category yet.':'No vendors yet. Add the first one.'}</p>${S.canWrite?'<button class="btn primary" data-vnewp>Add vendor</button>':''}</div>`;
   return `<header class="head"><div><h1>Vendors</h1><div class="meta">${all.length} ${all.length===1?'vendor':'vendors'}, ${booked} booked</div><p class="note" style="--c:var(--accent)">Quotes, contacts and samples of their work.</p></div><div class="actions">${S.canWrite?'<button class="btn primary" data-vnewp>Add vendor</button>':''}<button class="btn" data-pdf="vendors">PDF</button><button class="btn" data-csv="vendors">CSV</button></div></header>
   <div class="vhead costbox"><div class="vstat"><span>Quoted</span><b>${money(q)}</b></div><div class="vstat"><span>Paid so far</span><b>${money(p)}</b></div><div class="vstat"><span>Still owing</span><b>${money(Math.max(0,q-p))}</b></div></div>
   ${chips}${grid}`;
@@ -1128,6 +1193,14 @@ function vendorDrawerHTML(id){
   </div>`;
 }
 /* ---------- Personnel ---------- */
+function contribHTML(){
+  if(HC()||!S.canWrite&&!cTotals().n)return '';const c=S.plan.contrib||{},t=cTotals();
+  return `<details class="cbox costbox" ${t.n||S.copen?'open':''}><summary><span>Contributions</span><small>${t.n?`${t.paidN} of ${t.n} paid, ${money(t.got)} of ${money(t.due)} received`:'Set what the bridal train pays toward their outfits'}</small></summary>
+    <div class="cgrid"><label>Each groomsman and best man pays<input class="in" id="contribMen" inputmode="decimal" value="${esc(c.men||'')}" placeholder="0"></label><label>Each bridesmaid and maid of honor pays<input class="in" id="contribWomen" inputmode="decimal" value="${esc(c.women||'')}" placeholder="0"></label></div>
+    ${t.n?`<div class="vhead" style="margin:14px 0 10px"><div class="vstat"><span>Expected</span><b>${money(t.due)}</b></div><div class="vstat"><span>Received</span><b>${money(t.got)}</b></div><div class="vstat"><span>Outstanding</span><b>${money(t.due-t.got)}</b></div></div>
+    ${t.owing.length?`<div class="chips"><span class="muted" style="font-size:13px">Still to pay:</span>${t.owing.map(p=>`<button class="vchip" data-popen="${p.id}">${esc(p.name||'Unnamed')}<small>${money(cOwes(p))}</small></button>`).join('')}</div>`:'<p class="muted" style="margin:0">Everyone has paid.</p>'}`:''}
+    <p class="muted" style="font-size:12.5px;margin:10px 0 0">Kept separate from your budget. Open a person to mark them as paid, or to set a different amount for them.</p></details>`;
+}
 function prowHTML(p){
   const duties=(p.duties||[]).map(d=>`<span class="pduty">${esc(d)}</span>`).join('');
   const days=(p.days||[]).map(x=>{const c=CH.find(y=>y.id===x);return c?`<span class="vday" style="--c:${c.color}">${c.name}</span>`:''}).join('');
@@ -1135,7 +1208,7 @@ function prowHTML(p){
   return `<button class="prow" data-popen="${p.id}">
     <span class="pav">${esc(initial)}</span>
     <span class="pmain"><span class="pname">${esc(p.name||'Unnamed')}</span>${p.phone?`<span class="pph">${esc(p.phone)}</span>`:''}</span>
-    <span class="ptags">${todo?`<span class="ptodo">${todo} to do</span>`:''}${duties}${days}</span>
+    <span class="ptags">${cDue(p)?`<span class="cpill costbox ${cOwes(p)?'owes':'paid'}">${cOwes(p)?'Owes '+money(cOwes(p)):'Contribution paid'}</span>`:''}${looksForPerson(p).length?`<span class="ptodo plk">${looksForPerson(p).length} ${looksForPerson(p).length===1?'outfit':'outfits'}</span>`:''}${todo?`<span class="ptodo">${todo} to do</span>`:''}${duties}${days}</span>
   </button>`;
 }
 function peopleHTML(){
@@ -1146,7 +1219,7 @@ function peopleHTML(){
   const bar=S.canWrite?`<div class="addbar"><input class="in" id="personIn" placeholder="Name" maxlength="80"><select class="in" id="personRole" style="max-width:200px" aria-label="Role">${roles.map(r=>`<option${r==='Bridesmaid'?' selected':''}>${esc(r)}</option>`).join('')}</select><button class="btn primary" data-paddnew>Add</button></div>`:'';
   const rost=roster.length?`<h2 class="sub-h first" style="margin-bottom:14px">Who is in charge of what</h2><div class="roster">${roster.map(g=>`<div class="rtile"><span>${esc(g[0])}</span><b>${g[1].map(p=>esc(p.name||'Unnamed')).join(', ')}</b></div>`).join('')}</div>`:'';
   const body=groups.length?groups.map(g=>`<section class="tgroup"><h2>${esc(g[0])}</h2><p class="cnt">${g[1].length} ${g[1].length===1?'person':'people'}</p>${g[1].map(prowHTML).join('')}</section>`).join(''):`<div class="empty"><p>Nobody added yet. Start with the best man and the maid of honor.</p></div>`;
-  return `<header class="head"><div><h1>Personnel</h1><div class="meta">${all.length} ${all.length===1?'person':'people'}</div></div><div class="actions"><button class="btn" data-pdf="${S.tab.people==='guests'?'guests':'people'}">PDF</button><button class="btn" data-csv="${S.tab.people==='guests'?'guests':'people'}">CSV</button></div></header>${tabsHTML('people',[['team','Wedding team',all.length],['guests','Guest list',Object.keys(S.guests).length]])}${S.tab.people==='guests'?guestsHTML():bar+rost+body}`;
+  return `<header class="head"><div><h1>Personnel</h1><div class="meta">${all.length} ${all.length===1?'person':'people'}</div></div><div class="actions"><button class="btn" data-pdf="${S.tab.people==='guests'?'guests':'people'}">PDF</button><button class="btn" data-csv="${S.tab.people==='guests'?'guests':'people'}">CSV</button></div></header>${tabsHTML('people',[['team','Wedding team',all.length],['guests','Guest list',Object.keys(S.guests).length]])}${S.tab.people==='guests'?guestsHTML():bar+contribHTML()+rost+body}`;
 }
 function personDrawerHTML(id){
   const p=S.people[id];if(!p)return'';const dis=S.canWrite?'':'disabled';const cu=custom();
@@ -1166,6 +1239,11 @@ function personDrawerHTML(id){
     <div class="field"><label for="p-phone" class="flabel">Phone</label><input id="p-phone" class="in" data-pf="phone" value="${esc(p.phone)}" placeholder="080…" ${dis}></div>
     ${p.phone?`<div style="display:flex;gap:6px;margin:-6px 0 14px"><a class="btn small wa" href="https://wa.me/${waNum(p.phone)}" target="_blank" rel="noopener">WhatsApp</a><a class="btn small" href="tel:${esc(String(p.phone).replace(/[^\d+]/g,''))}">Call</a></div>`:''}
     <div class="field"><label for="p-notes" class="flabel">Notes</label><textarea id="p-notes" class="in" data-pf="notes" rows="3" placeholder="Outfit size, travel, anything to remember" ${dis}>${esc(p.notes)}</textarea></div>
+    <div class="field"><span class="flabel">Their outfits</span>${(()=>{const ls=looksForPerson(p);const gs=ROLEGROUP[p.role]||[];return ls.length?`<div class="chips">${ls.map(({l,c})=>`<button class="vchip" data-open="${l.id}">${esc(l.title||'Untitled look')}<small>${c.name}</small></button>`).join('')}</div>`:`<span class="muted">${gs.length?`No outfit yet. In Looks, set a look's "For" to ${esc(gs[0])} and it appears here.`:'Outfits link automatically for the bridal party and family roles.'}</span>`})()}</div>
+    ${cDue(p)||S.canWrite?`<div class="field costbox"><span class="flabel">Contribution</span>
+      ${cDue(p)?`<div class="seg" style="margin-bottom:8px"><button data-cpay="none" aria-pressed="${cPaid(p)===0}" ${dis}>Not paid</button><button data-cpay="full" aria-pressed="${!cOwes(p)}" ${dis}>Paid in full</button></div>`:''}
+      <div class="row2"><div><label for="p-contrib" class="flabel">Amount expected</label><input id="p-contrib" class="in" data-pf="contrib" inputmode="decimal" value="${esc(p.contrib??'')}" placeholder="${cDue(p)&&(p.contrib===undefined||p.contrib==='')?cDue(p):'0'}" ${dis}></div><div><label for="p-cpaid" class="flabel">Paid so far</label><input id="p-cpaid" class="in" data-pf="contribPaid" inputmode="decimal" value="${esc(p.contribPaid||'')}" placeholder="0" ${dis}></div></div>
+      ${cDue(p)?`<p class="muted" style="font-size:13px;margin:8px 0 0">${cOwes(p)?`Still owes ${money(cOwes(p))}.`:'Paid in full.'}</p>`:''}</div>`:''}
     <div class="field"><span class="flabel">Their tasks</span>${(()=>{const ts=tasksFor(id);return ts.length?`<ul class="ptasks">${ts.map(t=>`<li class="${t.status==='Done'?'done':''}">${esc(t.title||'Untitled')}<em>${esc(t.due||t.status||'')}</em></li>`).join('')}</ul>`:'<span class="muted">Nothing assigned to them yet</span>'})()}</div>
     ${S.canWrite?`<div class="dr-foot"><button class="btn small" data-ptask="${id}">Give them a task</button><button class="btn small danger" data-pdel>Remove person</button></div>`:''}
   </div>`;
@@ -1218,6 +1296,7 @@ function moneyHTML(){
   ${row('Paid to vendors',money(v.paid))}
   ${row('Spent on other plan items',money(pt.spent))}
   ${row('Still owing vendors',money(Math.max(0,v.quoted-v.paid)),'','total')}
+  ${(()=>{const t=cTotals(),gf=fAll().reduce((a,g)=>a+num(g.amount),0);return t.n||gf?`<h2 class="sub-h">Money coming in</h2><p class="muted" style="font-size:13px;margin:-8px 0 8px">Not counted in your budget.</p>${t.n?row('Contributions from the bridal train',money(t.got),`${t.paidN} of ${t.n} paid, ${money(t.due-t.got)} outstanding`):''}${gf?row('Cash gifts received',money(gf)):''}`:''})()}
   <h2 class="sub-h">Looks by ceremony</h2>
   ${CH.map(c=>row(esc(c.name),money(chTotal(c.id)),fmtDate((S.chapters[c.id]||{}).date)||'')).join('')}
   ${row('<b style="font-weight:400">All looks</b>',money(looks),'','total')}`;
@@ -1237,7 +1316,7 @@ const MONEYRE=/₦|NGN|naira|budget|million|\b\d{1,3}(,\d{3})+\b|\b\d{4,}\b/i;
 const vnote=x=>HC()&&(MONEYRE.test(x.notes||'')||num(x.budget)||num(x.spent))?'':(x.notes||'');
 const vchecks=x=>HC()?(x.checks||[]).filter(c=>!MONEYRE.test(c.t||'')):(x.checks||[]);
 const chName=id=>(CH.find(c=>c.id===id)||{}).name||'All ceremonies';
-S.tab={people:'team',activities:'todo',money:'costs'};S.ifilter='all';S.ich='';S.gside='';S.gev='';S.gq2='';S.runCh=localStorage.getItem('wl-runch')||'church';S.iclosed={};
+S.tab={people:'team',activities:'todo',money:'costs'};S.ifilter='all';S.ich='';S.gside='';S.gev='';S.gq2='';S.runCh=localStorage.getItem('wl-runch')||'church';S.iopenS={};
 const tabsHTML=(page,tabs)=>`<div class="tabs2" role="tablist">${tabs.map(([id,lab,n])=>`<button role="tab" data-tab="${page}|${id}" aria-selected="${S.tab[page]===id}">${lab}${n!==undefined&&n!==''?`<span>${n}</span>`:''}</button>`).join('')}</div>`;
 
 /* ---------- Plan ---------- */
@@ -1248,10 +1327,10 @@ function planHTML(){
   const chips=`<div class="vfilters">${[['all','Everything',all.length],...ISTATUS.map(s=>[s,s,all.filter(x=>(x.status||'Not discussed')===s).length])].map(([v,l,n])=>`<button data-ifilter="${v}" aria-pressed="${S.ifilter===v}">${l} ${n}</button>`).join('')}<select class="in isel" id="ichSel" aria-label="Ceremony"><option value="">Any ceremony</option>${CH.map(c=>`<option value="${c.id}" ${S.ich===c.id?'selected':''}>${c.name}</option>`).join('')}</select></div>`;
   const row=x=>{const ck=x.checks||[],dn=ck.filter(c=>c.done).length;const st=x.status||'Not discussed';const sub=[x.ch?chName(x.ch):'',x.who||'',ck.length?`${dn} of ${ck.length} ticked`:'',vnote(x)?vnote(x).slice(0,90)+(vnote(x).length>90?'…':''):''].filter(Boolean).join(' · ');
     return `<div class="irow"><button class="ist" data-icycle="${x.id}" data-s="${st}" title="Tap to change status">${st}</button><button class="imain" data-iopen="${x.id}"><span class="ititle">${esc(x.item||'Untitled')}</span>${sub?`<span class="isub">${esc(sub)}</span>`:''}</button>${iCost(x)?`<span class="iamt costbox">${money(iCost(x))}${iSpent(x)?`<small>${money(iSpent(x))} spent</small>`:''}</span>`:''}</div>`};
-  const body=all.length?(secs.map(sec=>{const rs=show.filter(x=>(x.section||'Other')===sec);if(!rs.length)return '';const d2=rs.filter(x=>x.status==='Decided').length;return `<details class="isec" ${S.iclosed[sec]?'':'open'} data-isec="${esc(sec)}"><summary><span>${esc(sec)}</span><small>${d2} of ${rs.length} decided</small></summary>${rs.map(row).join('')}</details>`}).join('')||'<div class="empty"><p>Nothing matches this filter.</p></div>')
+  const body=all.length?(secs.map(sec=>{const rs=show.filter(x=>(x.section||'Other')===sec);if(!rs.length)return '';const d2=rs.filter(x=>x.status==='Decided').length;const pn=rs.filter(x=>x.status==='Pending').length;return `<details class="isec" ${S.iopenS[sec]?'open':''} data-isec="${esc(sec)}"><summary><span class="isn">${esc(sec)}</span><small>${d2} of ${rs.length} decided${pn?`, ${pn} pending`:''}</small><i class="ibar"><b style="width:${d2/rs.length*100}%"></b></i></summary><div class="irows">${rs.map(row).join('')}</div></details>`}).join('')||'<div class="empty"><p>Nothing matches this filter.</p></div>')
     :`<div class="empty"><p>Your plan is empty. Add your first item, or bring in your planning spreadsheet.</p>${S.canWrite?'<button class="btn primary" data-iimport>Import spreadsheet (CSV)</button>':''}</div>`;
   return `<header class="head"><div><h1>Plan</h1><div class="meta">${dec} of ${all.length} decided</div><p class="note" style="--c:var(--gold)">Every decision in one place. Tap a status to change it, tap an item to open it.</p></div><div class="actions">${S.canWrite?'<button class="btn primary" data-iadd>Add item</button><button class="btn" data-iimport>Import CSV</button>':''}<button class="btn" data-pdf="plan">PDF</button></div></header>
-  ${all.length?`<div class="pbar"><i style="width:${all.length?dec/all.length*100:0}%"></i></div>`:''}${all.length?chips:''}${body}`;
+  ${all.length?`<div class="pbar"><i style="width:${all.length?dec/all.length*100:0}%"></i></div>`:''}${all.length?chips+`<p class="iall"><button class="linkbtn" data-iall="1">Open all</button> <button class="linkbtn" data-iall="0">Close all</button><span class="muted"> Tap a section to see what's inside.</span></p>`:''}<div class="isecs">${body}</div>`;
 }
 function planDrawerHTML(id){
   const x=S.items[id];if(!x)return'';const dis=S.canWrite?'':'disabled';const ck=x.checks||[];
@@ -1321,6 +1400,42 @@ function giftsHTML(){
   return `<div class="vhead"><div class="vstat"><span>Cash gifts received</span><b>${money(cash)}</b></div><div class="vstat"><span>Gifts recorded</span><b>${all.length}</b></div><div class="vstat"><span>Thanked</span><b>${th} of ${all.length}</b></div></div>
   <p class="muted" style="font-size:13px;margin:-14px 0 20px">Kept separate from your budget, as you decided: gifted funds go to contingency. Tick the circle once you've said thank you.</p>${bar}${rows?`<div class="flist">${rows}</div>`:'<div class="empty"><p>No gifts recorded yet.</p></div>'}`;
 }
+/* ---------- Search everything ---------- */
+let SR=false;
+function searchAll(q){
+  const ws=q.toLowerCase().split(/\s+/).filter(Boolean);if(!ws.length)return [];const hit=(...parts)=>{const h=parts.filter(Boolean).join(' ').toLowerCase();return ws.every(w=>h.includes(w))};
+  const G=[];const add=(name,items)=>{if(items.length)G.push({name,items})};
+  add('Looks',[...CH,INBOX].flatMap(c=>byChapter(c.id).filter(l=>lookMatches(l,{q})).map(l=>({k:'look|'+l.id,t:l.title||'Untitled look',s:c.name+(l.who?', '+l.who:'')}))));
+  add('Plan',iAll().filter(x=>hit(x.item,x.section,vnote(x),vchecks(x).map(c=>c.t).join(' '))).map(x=>({k:'plan|'+x.id,t:x.item||'Untitled',s:(x.section||'Other')+', '+(x.status||'Not discussed')})));
+  add('Personnel',pAll().filter(p=>hit(p.name,p.role,(p.duties||[]).join(' '),p.phone,p.notes)).map(p=>({k:'person|'+p.id,t:p.name||'Unnamed',s:[p.role,(p.duties||[]).join(', ')].filter(Boolean).join(', ')})));
+  add('Guest list',gAll().filter(g=>hit(g.name,g.side)).map(g=>({k:'guest|'+g.id,t:g.name||'Unnamed',s:[g.side,g.rsvp||'Invited'].filter(Boolean).join(', ')})));
+  add('Vendors',vAll().filter(v=>hit(v.name,vCat(v),v.phone,v.link,v.notes,v.status)).map(v=>({k:'vendor|'+v.id,t:v.name||'Unnamed vendor',s:vCat(v)+', '+(v.status||'Shortlisted')})));
+  add('To-do list',tAll().filter(t=>hit(t.title,whoLabel(t.who))).map(t=>({k:'task|'+t.id,t:t.title||'Untitled',s:[t.status==='Done'?'Done':(t.due?'Due '+shortDate(t.due):'No date'),whoLabel(t.who)].join(', ')})));
+  add('Day-of timeline',runAll().filter(r=>hit(r.title,r.who,r.time)).map(r=>({k:'run|'+r.id,t:(r.time?r.time+'  ':'')+(r.title||''),s:chName(r.ch)})));
+  if(!HC())add('Gifts',fAll().filter(g=>hit(g.from,g.note)).map(g=>({k:'gift|'+g.id,t:g.from||'Gift',s:num(g.amount)?money(num(g.amount)):(g.note||'Item')})));
+  return G;
+}
+function srRender(){
+  const q=$('#srIn').value.trim();const G=q?searchAll(q):[];
+  $('#srRes').innerHTML=!q?'<p class="muted">Type a name, an outfit, a vendor, a task or anything else in your plan.</p>':!G.length?'<p class="muted">Nothing found. Try a shorter word.</p>':G.map(g=>`<div class="sr-g"><h3>${g.name}<small>${g.items.length}</small></h3>${g.items.slice(0,8).map(x=>`<button data-sgo="${x.k}"><b>${esc(x.t)}</b><span>${esc(x.s)}</span></button>`).join('')}${g.items.length>8?`<p class="muted">and ${g.items.length-8} more. Add another word to narrow it down.</p>`:''}</div>`).join('');
+}
+function openSearch(){if(!SR){pushOverlay('sr');SR=true}toggleMenu(false,true);$('#sr').hidden=false;$('#srScrim').classList.add('on');const i=$('#srIn');i.value='';srRender();setTimeout(()=>i.focus(),40)}
+function closeSearch(silent){if(SR){SR=false;if(silent)dropOverlay('sr');else popOverlay('sr')}$('#sr').hidden=true;$('#srScrim').classList.remove('on')}
+function searchGo(k){
+  const [kind,id]=k.split('|');closeSearch(true);closeDrawer(true);closeR(true);const go=pg=>{setPage(pg,false);render();window.scrollTo({top:0})};
+  if(kind==='look'){const l=S.looks.get(id);if(!l)return;go(l.chapter);openDrawer(id)}
+  else if(kind==='plan'){const x=S.items[id];if(!x)return;S.ifilter='all';S.ich='';S.iopenS[x.section||'Other']=true;go('plan');openR('plan',id)}
+  else if(kind==='person'){S.tab.people='team';go('people');openR('person',id)}
+  else if(kind==='guest'){const g=S.guests[id];S.tab.people='guests';S.gside='';S.gev='';S.gq2=(g&&g.name)||'';go('people')}
+  else if(kind==='vendor'){S.vfilter='all';go('vendors');openR('vendor',id)}
+  else if(kind==='task'){S.tab.activities='todo';go('activities');const r=document.querySelector(`.trow[data-tid="${id}"]`);if(r){r.scrollIntoView({block:'center'});r.classList.add('flash')}}
+  else if(kind==='run'){const r=S.run[id];S.tab.activities='run';if(r)S.runCh=r.ch;go('activities');const el=document.querySelector(`[data-row="run|${id}"]`);if(el){el.scrollIntoView({block:'center'});el.classList.add('flash')}}
+  else if(kind==='gift'){S.tab.money='gifts';go('money');const el=document.querySelector(`[data-row="gift|${id}"]`);if(el){el.scrollIntoView({block:'center'});el.classList.add('flash')}}
+}
+$('#srIn').addEventListener('input',e=>{e.stopPropagation();srRender()});
+$('#srClose').addEventListener('click',()=>closeSearch());
+$('#srScrim').addEventListener('click',()=>closeSearch());
+
 /* ---------- Backup and undo ---------- */
 let UNDO=null,undoT=null;
 function offerUndo(label,restore){UNDO=restore;const t=$('#toast');t.innerHTML=`${esc(label)} <button class="undo-btn" data-undo>Undo</button>`;t.classList.add('on','has-btn');clearTimeout(toastT);clearTimeout(undoT);undoT=setTimeout(()=>{t.classList.remove('on','has-btn');UNDO=null},8000)}
@@ -1354,8 +1469,8 @@ function buildCSV(scope='all',onlyCh=null){
   if(on('looks')){rows.push(['CEREMONIES'],['Ceremony','Date','Palette','Looks'].concat(nc?[]:['Budget ('+cur+')','Looks total ('+cur+')']));CHS.forEach(c=>{const m=S.chapters[c.id]||{};rows.push([c.name,m.date||'',(m.palette||[]).map(p=>p.name?p.name+' '+p.hex:p.hex).join(' / '),byChapter(c.id).length].concat(nc?[]:[m.budget||'',Math.round(chTotal(c.id))]))});rows.push([]);
     rows.push(['LOOKS'],['Ceremony','Look','For','Status','Colors','Outfit & fabric','Accessories','Shoes','Hair & makeup','Notes'].concat(nc?[]:['Cost lines','Total ('+cur+')','Still to pay ('+cur+')']));
     CHS.forEach(c=>byChapter(c.id).forEach(l=>rows.push([c.name,l.title||'',l.who||'',l.status||'Idea',(l.colors||[]).join(' / '),l.outfit||'',l.accessories||'',l.shoes||'',l.beauty||'',l.notes||''].concat(nc?[]:[(l.costs||[]).filter(r=>num(r.amount)).map(r=>(r.label||'Item')+' '+Math.round(num(r.amount))).join(' / '),Math.round(lookTotal(l)),Math.round(lookOwed(l))]))));rows.push([])}
-  if(on('people')){rows.push(['PERSONNEL'],['Name','Role','In charge of','Needed on','Phone','Open tasks','Notes']);pAll().forEach(p=>rows.push([p.name||'',p.role||'',(p.duties||[]).join(' / '),dayNames(p.days),p.phone||'',tasksFor(p.id).filter(t=>t.status!=='Done').map(t=>t.title||'Untitled').join(' / '),p.notes||'']));rows.push([])}
-  if(on('vendors')){rows.push(['VENDORS'],['Name','What they do','Status','Days','Phone','Instagram or website'].concat(nc?[]:['Quote ('+cur+')','Paid ('+cur+')','Still owing ('+cur+')']).concat(['Notes']));vAll().forEach(v=>rows.push([v.name||'',vCat(v),v.status||'',dayNames(v.days),v.phone||'',v.link||''].concat(nc?[]:[Math.round(vQuote(v)),Math.round(vPaid(v)),Math.round(Math.max(0,vQuote(v)-vPaid(v)))]).concat([v.notes||''])));rows.push([])}
+  if(on('people')){rows.push(['PERSONNEL'],['Name','Role','In charge of','Needed on','Phone','Outfits','Open tasks','Notes'].concat(nc?[]:['Contribution expected ('+cur+')','Contribution paid ('+cur+')']));pAll().forEach(p=>rows.push([p.name||'',p.role||'',(p.duties||[]).join(' / '),dayNames(p.days),p.phone||'',looksForPerson(p).map(x=>x.l.title||'Untitled').join(' / '),tasksFor(p.id).filter(t=>t.status!=='Done').map(t=>t.title||'Untitled').join(' / '),p.notes||''].concat(nc?[]:[cDue(p)||'',cDue(p)?Math.min(cDue(p),cPaid(p)):''])));rows.push([])}
+  if(on('vendors')){rows.push(['VENDORS'],['Name','What they do','Status','Days','Phone','Instagram or website'].concat(nc?[]:['Quote ('+cur+')','Paid ('+cur+')','Still owing ('+cur+')']).concat(['Notes']));vByCat().forEach(v=>rows.push([v.name||'',vCat(v),v.status||'',dayNames(v.days),v.phone||'',v.link||''].concat(nc?[]:[Math.round(vQuote(v)),Math.round(vPaid(v)),Math.round(Math.max(0,vQuote(v)-vPaid(v)))]).concat([v.notes||''])));rows.push([])}
   if(on('plan')){rows.push(['PLAN'],['Section','Item','Status','Ceremony','Who','Notes / decision','Checklist'].concat(nc?[]:['Budget ('+cur+')','Spent ('+cur+')']));iAll().forEach(x=>rows.push([x.section||'',x.item||'',x.status||'Not discussed',x.ch?chName(x.ch):'All',x.who||'',vnote(x),vchecks(x).map(c=>(c.done?'[x] ':'[ ] ')+c.t).join(' / ')].concat(nc?[]:[Math.round(iCost(x))||'',Math.round(iSpent(x))||''])));rows.push([])}
   if(on('guests')){rows.push(['GUEST LIST'],['Name','Side','Invited to','Reply','Extra people']);gAll().forEach(g=>rows.push([g.name||'',g.side||'',dayNames(g.events),g.rsvp||'Invited',g.plus||'']));rows.push([])}
   if(on('run')){rows.push(['DAY-OF TIMELINE'],['Ceremony','Time','What happens','Who']);GCH().forEach(c=>runAll(c.id).forEach(r=>rows.push([c.name,r.time||'',r.title||'',r.who||''])));rows.push([])}
@@ -1478,7 +1593,7 @@ let pendingMain=false;
 const editingMain=()=>{const a=document.activeElement;return !!(a&&a.closest&&a.closest('#main')&&a.matches('input,textarea,select'))};
 function render(){renderSide();if(editingMain()){pendingMain=true;return}pendingMain=false;renderMain();hydrate();afterMain()}
 function afterMain(){if(isLooksPage(S.active)&&!$('#main .looktabs')){$('#main').insertAdjacentHTML('afterbegin',lookTabsHTML());const a=$('#main .looktabs [aria-current="true"]');if(a&&a.scrollIntoView)try{a.scrollIntoView({block:'nearest',inline:'center'})}catch{}}lockRO($('#main'));const cv=$('#aeCanvas');if(cv&&CH.some(c=>c.id===S.active)){const det=cv.closest('details');if(det&&det.open)drawAso(S.active)}}
-document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('isec')){S.iclosed[e.target.dataset.isec]=!e.target.open;return}if(e.target.classList&&e.target.classList.contains('aso')&&e.target.open)drawAso(S.active)},true);
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('isec')){S.iopenS[e.target.dataset.isec]=e.target.open;return}if(e.target.classList&&e.target.classList.contains('aso')&&e.target.open)drawAso(S.active)},true);
 document.addEventListener('focusout',e=>{if(!pendingMain)return;setTimeout(()=>{if(pendingMain&&!editingMain()){pendingMain=false;renderMain();hydrate();afterMain()}},0)});
 
 /* ---------- Drawer ---------- */
@@ -1495,7 +1610,7 @@ function drawerHTML(id){
       ${S.canWrite&&S.canUpload?`<button class="add" data-add-to="${id}">Add picture</button>`:''}
     </div></div>
     <div class="field"><label class="flabel" for="f-occ">Occasion</label><select id="f-occ" class="in" data-occ ${dis}>${[INBOX,...CH].map(c2=>`<option value="${c2.id}" ${l.chapter===c2.id?'selected':''}>${c2.name}</option>`).join('')}</select></div>
-    <div class="field"><span class="flabel">For</span><div class="seg">${WHO.map(w=>`<button data-who="${w}" aria-pressed="${l.who===w}" ${dis}>${w}</button>`).join('')}</div></div>
+    <div class="field"><span class="flabel">For</span><div class="seg">${WHO.map(w=>`<button data-who="${w}" aria-pressed="${l.who===w}" ${dis}>${w}</button>`).join('')}</div>${(()=>{const ps=peopleForLook(l);return ps.length?`<div class="chips" style="margin-top:8px"><span class="muted" style="font-size:13px">Worn by:</span>${ps.map(x=>`<button class="vchip" data-popen="${x.id}">${esc(x.name||'Unnamed')}<small>${esc(x.role||'')}</small></button>`).join('')}</div>`:''})()}</div>
     <div class="field"><span class="flabel">Status</span><div class="seg">${STATUS.map(s=>`<button data-status="${s}" aria-pressed="${(l.status||'Idea')===s}" ${dis}>${s}</button>`).join('')}</div></div>
     <div class="field"><span class="flabel">Colors</span><div class="chips">
       ${(l.colors||[]).map((s,i)=>`<span class="chip"><i class="sw" style="--s:${esc(s)}"></i>${esc(s)}${S.canWrite?`<button data-rmcolor="${i}" aria-label="Remove color">×</button>`:''}</span>`).join('')}
@@ -1678,6 +1793,9 @@ document.addEventListener('click',e=>{
   if('close' in d){const wasNew=DR&&DR.isNew,wasDirty=DR&&DR.dirty;closeDrawer();if(wasDirty||wasNew)toast('Saved');return}
   if('cancel' in d){cancelDrawer();return}
   if('undo' in d){doUndo();return}
+  if('search' in d){openSearch();return}
+  if(d.sgo){searchGo(d.sgo);return}
+  if(d.iall!==undefined){const on=d.iall==='1';[...new Set(iAll().map(x=>x.section||'Other'))].forEach(sec=>{S.iopenS[sec]=on});render();return}
   if(d.tab){const [pg,tb]=d.tab.split('|');S.tab[pg]=tb;render();return}
   if(d.ifilter!==undefined){S.ifilter=d.ifilter;render();return}
   if('iadd' in d){const nid=rnew('plan',{section:'Other',item:'',status:'Not discussed',ch:'',who:'Both',notes:'',checks:[],order:Date.now()});if(nid){render();openR('plan',nid)}return}
@@ -1723,7 +1841,8 @@ document.addEventListener('click',e=>{
       return;
     }
     if(R2.kind==='person'){
-      if(d.pduty){rchange('person',rid2,p=>{const x=new Set(p.duties||[]);x.has(d.pduty)?x.delete(d.pduty):x.add(d.pduty);p.duties=[...x]});refreshR()}
+      if(d.cpay){rchange('person',rid2,p=>{p.contribPaid=d.cpay==='full'?String(cDue(p)):''});refreshR()}
+      else if(d.pduty){rchange('person',rid2,p=>{const x=new Set(p.duties||[]);x.has(d.pduty)?x.delete(d.pduty):x.add(d.pduty);p.duties=[...x]});refreshR()}
       else if(d.pday){rchange('person',rid2,p=>{const x=new Set(p.days||[]);x.has(d.pday)?x.delete(d.pday):x.add(d.pday);p.days=[...x]});refreshR()}
       else if(d.ptask){rnew('task',{title:'',due:'',who:'p:'+rid2,status:'To do',order:Date.now()});render();refreshR();toast('Added to Activities, give it a name there')}
       else if('dutyadd' in d){const v=(($('#dutyNew')||{}).value||'').trim();if(!v)return;if(!allDuties().includes(v))changePlan(p=>{const c=p.custom||(p.custom={duties:[],roles:[]});c.duties=[...(c.duties||[]),v]});rchange('person',rid2,p=>{p.duties=[...new Set([...(p.duties||[]),v])]});refreshR()}
@@ -1818,9 +1937,10 @@ document.addEventListener('change',e=>{
   if(t.dataset.chf){const [k,f]=t.dataset.chf.split('|');const v=t.value.trim();changeMeta(k,o=>{o[f]=v});return}
   {const rw=t.closest('[data-row]');if(rw&&t.dataset.rf){const [k,id2]=rw.dataset.row.split('|');rchange(k,id2,o=>{o[t.dataset.rf]=t.value});return}}
   if(R2.kind==='vendor'&&t.dataset.vlink!==undefined&&t.value){const lid=t.value,vid=R2.id;change(lid,l=>{l.vendors=[...new Set([...(l.vendors||[]),vid])]});refreshR();toast('Look linked');return}
-  if(R2.kind&&t.closest('#rdrawer')){if(t.dataset.pf)rchange('person',R2.id,p=>{p[t.dataset.pf]=t.value});else if(t.dataset.vf)rchange('vendor',R2.id,v=>{v[t.dataset.vf]=t.value});if(t.tagName==='SELECT'||t.dataset.vf==='phone'||t.dataset.pf==='phone')refreshR();return}
+  if(R2.kind&&t.closest('#rdrawer')){if(t.dataset.pf)rchange('person',R2.id,p=>{p[t.dataset.pf]=t.value});else if(t.dataset.vf)rchange('vendor',R2.id,v=>{v[t.dataset.vf]=t.value});if(t.tagName==='SELECT'||t.dataset.vf==='phone'||t.dataset.pf==='phone'||/^contrib/.test(t.dataset.pf||''))refreshR();return}
   {const row=t.closest('.trow');if(row&&t.dataset.tf&&t.dataset.tf!=='title'){rchange('task',row.dataset.tid,x=>{x[t.dataset.tf]=t.value});return}if(row&&t.dataset.tf==='title'){render();return}}
   if(t.id==='noCost'||t.classList.contains('nocost-in')){S.noCosts=t.checked;try{localStorage.setItem('wl-nocosts',S.noCosts?'1':'0')}catch{}render();toast(S.noCosts?'Exports will leave costs out':'Exports will include costs');return}
+  if(t.id==='contribMen'||t.id==='contribWomen'){const k=t.id==='contribMen'?'men':'women',v=t.value.replace(/[^\d.]/g,'');S.copen=true;changePlan(p=>{p.contrib={...(p.contrib||{}),[k]:v}});return}
   if(t.id==='budgetIn'){const v=num(t.value);changePlan(p=>{p.budget=v});return}
   if(t.id==='fs'||t.id==='fp'||t.id==='fh'){S.flt[{fs:'status',fp:'person',fh:'fav'}[t.id]]=t.value;refreshBoard();return}
   if(t.dataset.moveTo){const id=t.dataset.moveTo,v=t.value;if(v){change(id,l=>{l.chapter=v;l.order=Date.now()});toast('Moved to '+pageName(v))}return}
@@ -1865,7 +1985,7 @@ $('#planFile').addEventListener('change',async e=>{const f=e.target.files&&e.tar
 $('#backupFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{restoreBackup(await f.text())}catch{toast('Could not read that file.')}});
 $('#rscrim').addEventListener('click',()=>closeR());
 $('#navScrim').addEventListener('click',()=>toggleMenu(false));
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&['guestIn','runIn','runTime','giftFrom','giftAmt','gq2'].includes(e.target.id)){e.preventDefault();const b={guestIn:'[data-gadd]',runIn:'[data-runadd]',runTime:'[data-runadd]',giftFrom:'[data-giftadd]',giftAmt:'[data-giftadd]'}[e.target.id];if(b)document.querySelector(b).click();else e.target.blur();return}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.ict!==undefined){e.preventDefault();const b=document.querySelector('#rdrawer [data-icadd]');if(b)b.click();return}if(e.key==='Enter'&&e.target.id==='personIn'){e.preventDefault();addPersonFromBar();return}if(e.key==='Enter'&&(e.target.id==='taskIn'||e.target.id==='taskDue')){e.preventDefault();addTaskFromBar();return}if(e.key==='Enter'&&(e.target.id==='dutyNew'||e.target.id==='roleNew')){e.preventDefault();const b=document.querySelector(e.target.id==='dutyNew'?'[data-dutyadd]':'[data-roleadd]');if(b)b.click();return}if(R2.kind&&e.key==='Escape'&&!TG&&$('#cp').hidden){closeR();return}if(PP){if(e.key==='Escape')closePalPick();return}if(VD){if(e.key==='Escape')closeVendor();return}if(AI.open&&!TG&&$('#cp').hidden){if(e.key==='Escape'){closeAI();return}}if(TG){if(e.key==='Escape')closeTags();else if(e.key==='Enter')okTags();return}if(e.key==='Escape'&&document.body.classList.contains('nav-open')){toggleMenu(false);return}if(LB){if(e.key==='Escape')closeLightbox();else if(e.key==='ArrowRight')lbStep(1);else if(e.key==='ArrowLeft')lbStep(-1);return}if(!$('#cp').hidden){if(e.key==='Escape')closePicker();else if(e.key==='Enter'&&e.target.closest('#cp'))okPicker();return}if(e.key==='Escape'&&S.open)closeDrawer()});
+document.addEventListener('keydown',e=>{if(SR){if(e.key==='Escape')closeSearch();else if(e.key==='Enter'&&e.target.id==='srIn'){const b=document.querySelector('#srRes [data-sgo]');if(b)b.click()}return}if((e.key==='/'||(e.key.toLowerCase()==='k'&&(e.ctrlKey||e.metaKey)))&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();openSearch();return}if(e.key==='Enter'&&['guestIn','runIn','runTime','giftFrom','giftAmt','gq2'].includes(e.target.id)){e.preventDefault();const b={guestIn:'[data-gadd]',runIn:'[data-runadd]',runTime:'[data-runadd]',giftFrom:'[data-giftadd]',giftAmt:'[data-giftadd]'}[e.target.id];if(b)document.querySelector(b).click();else e.target.blur();return}if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.ict!==undefined){e.preventDefault();const b=document.querySelector('#rdrawer [data-icadd]');if(b)b.click();return}if(e.key==='Enter'&&e.target.id==='personIn'){e.preventDefault();addPersonFromBar();return}if(e.key==='Enter'&&(e.target.id==='taskIn'||e.target.id==='taskDue')){e.preventDefault();addTaskFromBar();return}if(e.key==='Enter'&&(e.target.id==='dutyNew'||e.target.id==='roleNew')){e.preventDefault();const b=document.querySelector(e.target.id==='dutyNew'?'[data-dutyadd]':'[data-roleadd]');if(b)b.click();return}if(R2.kind&&e.key==='Escape'&&!TG&&$('#cp').hidden){closeR();return}if(PP){if(e.key==='Escape')closePalPick();return}if(VD){if(e.key==='Escape')closeVendor();return}if(AI.open&&!TG&&$('#cp').hidden){if(e.key==='Escape'){closeAI();return}}if(TG){if(e.key==='Escape')closeTags();else if(e.key==='Enter')okTags();return}if(e.key==='Escape'&&document.body.classList.contains('nav-open')){toggleMenu(false);return}if(LB){if(e.key==='Escape')closeLightbox();else if(e.key==='ArrowRight')lbStep(1);else if(e.key==='ArrowLeft')lbStep(-1);return}if(!$('#cp').hidden){if(e.key==='Escape')closePicker();else if(e.key==='Enter'&&e.target.closest('#cp'))okPicker();return}if(e.key==='Escape'&&S.open)closeDrawer()});
 let dragN=0;
 addEventListener('dragenter',e=>{if([...e.dataTransfer.types].includes('Files')&&S.canWrite){dragN++;$('#drop').classList.add('on')}});
 addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN)$('#drop').classList.remove('on')});
@@ -2289,15 +2409,16 @@ async function exportPDF(btn,only,scope='all'){
         const roles=allRoles();const groups=roles.map(r=>[r,all.filter(p=>p.role===r)]).filter(g=>g[1].length);const loose=all.filter(p=>!roles.includes(p.role));if(loose.length)groups.push(['Unsorted',loose]);
         const xs=[M,M+48,M+100,M+140];
         groups.forEach(([r,ps])=>{need(16,'Personnel');T(r,M,y+2,{f:'D',size:15});y+=8;caps('Name',xs[0],y);caps('In charge of',xs[1],y);caps('Needed on',xs[2],y);caps('Phone',xs[3],y);y+=3;hr(M,PW-M,y);y+=5;
-          ps.forEach(pp=>{need(10,'Personnel');cols([pp.name||'Unnamed',(pp.duties||[]).join(', '),dayNames(pp.days),pp.phone||''],xs,{});if(pp.notes){T(wrap(pp.notes,PW-2*M-48,'L',7.6)[0],xs[1],y+7.6,{f:'L',size:7.6,color:C.mut});y+=3.6}y+=8.5;hr(M,PW-M,y-3.5)});y+=6});
+          ps.forEach(pp=>{const vals=[pp.name||'Unnamed',(pp.duties||[]).join(', '),(pp.days||[]).map(x=>chName(x).split(' ')[0]).join(', '),pp.phone||''];const nl=Math.max(2,...vals.map((v,i)=>v?Math.min(5,wrap(v,(xs[i+1]||PW-M)-xs[i]-3,'L',8.6).length):1));const extra=[pp.notes,!nc&&cDue(pp)?(cOwes(pp)?`Contribution: owes ${pm(cOwes(pp))} of ${pm(cDue(pp))}`:`Contribution paid: ${pm(cDue(pp))}`):''].filter(Boolean).join('   ');need(6+nl*3.8+(extra?3.6:0),'Personnel');cols(vals,xs,{max:5});if(extra){T(wrap(extra,PW-2*M-48,'L',7.6)[0],xs[1],y+nl*3.8,{f:'L',size:7.6,color:C.mut});y+=3.6}y+=nl*3.8+0.9;hr(M,PW-M,y-3.5)});y+=6});
         footer();
       }
       if(scope==='all'||scope==='vendors'){
-        const all=vAll();const q=all.reduce((a,v)=>a+vQuote(v),0),pd=all.reduce((a,v)=>a+vPaid(v),0);
+        const all=vByCat();let lastCat=null;const q=all.reduce((a,v)=>a+vQuote(v),0),pd=all.reduce((a,v)=>a+vPaid(v),0);
         newPage('Vendors',`${all.length} ${all.length===1?'vendor':'vendors'}, ${all.filter(v=>['Booked','Paid','Done'].includes(v.status)).length} booked`);
         if(!nc&&all.length){[['Quoted',q],['Paid so far',pd],['Still owing',Math.max(0,q-pd)]].forEach(([l,v],i)=>{caps(l,M+i*55,y);T(pm(v),M+i*55,y+7,{f:'R',size:12})});y+=16}
         if(!all.length)T('No vendors yet.',M,y,{f:'L',size:10,color:C.mut});
         for(const v of all){
+          if(vCat(v)!==lastCat){lastCat=vCat(v);need(40,'Vendors');y+=2;T(lastCat,M,y+2,{f:'D',size:16});y+=6;hr(M,PW-M,y);y+=8}
           const im=(v.images||[])[0]?await memoImg(v.images[0],'square'):null;const th=im?22:0;need(Math.max(th,20)+6,'Vendors');
           const tx=im?M+th+5:M;if(im)doc.addImage(im.data,'JPEG',M,y-3,th,th);
           caps(vCat(v),tx,y,{size:6.4});T(v.name||'Unnamed vendor',tx,y+6,{f:'D',size:14});
@@ -2627,7 +2748,7 @@ function setPage(pg,push){
 addEventListener('popstate',()=>{
   if(skipPop>0){skipPop--;return}
   if(OV.length){const top=OV.pop();
-    if(top==='rdrawer')closeR(true);else if(top==='pp')closePalPick(true);else if(top==='vd')closeVendor(true);else if(top==='ai')closeAI(true);else if(top==='cp')closePicker(true);else if(top==='tg')closeTags(true);else if(top==='lb')closeLightbox(true);else if(top==='drawer')closeDrawer(true);else if(top==='menu'){const mn=MENU_NAV;MENU_NAV=false;toggleMenu(false,true);if(mn){const pg=location.hash.slice(1);if(PAGES.includes(pg)&&pg!==S.active){S.active=pg;render();window.scrollTo({top:0})}}}
+    if(top==='sr')closeSearch(true);else if(top==='rdrawer')closeR(true);else if(top==='pp')closePalPick(true);else if(top==='vd')closeVendor(true);else if(top==='ai')closeAI(true);else if(top==='cp')closePicker(true);else if(top==='tg')closeTags(true);else if(top==='lb')closeLightbox(true);else if(top==='drawer')closeDrawer(true);else if(top==='menu'){const mn=MENU_NAV;MENU_NAV=false;toggleMenu(false,true);if(mn){const pg=location.hash.slice(1);if(PAGES.includes(pg)&&pg!==S.active){S.active=pg;render();window.scrollTo({top:0})}}}
     return}
   const pg=location.hash.slice(1);
   if(PAGES.includes(pg)&&pg!==S.active){S.active=pg;try{localStorage.setItem('wl-page',pg)}catch{}closeDrawer(true);toggleMenu(false,true);render();window.scrollTo({top:0})}
