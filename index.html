@@ -336,6 +336,16 @@ td button{background:none;border:0;padding:0;text-align:left;text-decoration:und
 .rdrawer{z-index:62}
 .home-sec{max-width:900px;margin-bottom:40px}
 @media (max-width:860px){.nav .grp{display:none}}
+.side{overflow-y:auto;scrollbar-width:thin}
+.side-foot{padding-top:14px}
+.nav .subnav button{padding:6px 10px 6px 26px;font-size:13.5px}
+@media (min-width:861px) and (max-height:900px){.side{padding-top:22px}.mark{font-size:32px}.mark-sub{margin-bottom:16px}.nav button{padding-top:8px;padding-bottom:8px}.nav .subnav button{padding-top:5px;padding-bottom:5px}.grand{font-size:28px}}
+.nav button.open{font-weight:400}
+.nav button.open .dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
+.exp-lbl{font-size:11px;color:var(--muted);margin:12px 0 6px}
+.side .nocost{margin-top:8px}
+body.hidecosts .costbox,body.hidecosts .grand-label,body.hidecosts .grand,body.hidecosts .mb-total,body.hidecosts .cap-foot .price,body.hidecosts .vfoot .price,body.hidecosts .owed,body.hidecosts .nocost{display:none!important}
+body.hidecosts .cap-foot,body.hidecosts .vfoot{justify-content:flex-end}
 /* ---- v2 features ---- */
 .note-in{display:block;width:100%;max-width:62ch;border:0;border-left:2px solid var(--c);background:transparent;font:inherit;font-size:15px;color:var(--muted);padding:2px 0 2px 14px;margin:18px 0 0}
 .note-in:hover{color:var(--ink)}
@@ -685,7 +695,7 @@ body.ai-open .ai-fab,body.dr-open .ai-fab{display:none}
     <div class="side-top">
       <div>
         <p class="mark">Bako &amp; Made</p>
-        <p class="mark-sub">Our wedding looks</p>
+        <p class="mark-sub">Our wedding planner</p>
       </div>
       <div class="side-foot" id="sideFootMobile"></div>
     </div>
@@ -775,6 +785,11 @@ const VSTATUS=['Shortlisted','Contacted','Quoted','Booked','Paid','Done'];
 const PROLE=['Bride','Groom','Maid of honor','Chief bridesmaid','Best man','Bridesmaid','Groomsman','Little bride','Parent','Family','Friend','Vendor liaison','Other'];
 const PDUTY=['Rings','Transport','Guests & ushering','Gifts','Drinks','Food service','Photography','Music & MC','Security','Decoration','Money & payments','Errands'];
 const TWHO=['Bride','Groom','Both','Family'];
+const HC=()=>!S.canWrite; // viewers never see costs
+const noCost=()=>S.noCosts||HC();
+const LOOKPAGES=()=>['overview','inbox','summary',...CH.map(c=>c.id)];
+const isLooksPage=pg=>LOOKPAGES().includes(pg);
+try{S.noCosts=localStorage.getItem('wl-nocosts')==='1'}catch{}
 const custom=()=>S.plan.custom||(S.plan.custom={duties:[],roles:[]});
 const allDuties=()=>[...new Set([...PDUTY,...(custom().duties||[]),...Object.values(S.people).flatMap(p=>p.duties||[])])];
 const allRoles=()=>[...new Set([...PROLE,...(custom().roles||[]),...Object.values(S.people).map(p=>p.role).filter(Boolean)])];
@@ -849,9 +864,16 @@ function renderSide(){
   const nn=newsItems().length;
   const nb=(id,name,color,sum='')=>`<li><button data-nav="${id}" style="--c:${color}" aria-current="${S.active===id}"><span class="dot"></span><span>${name}</span><span class="sum">${sum}</span></button></li>`;
   const openT=tAll().filter(t=>t.status!=='Done').length;
-  $('#nav').innerHTML=nb('home','Home','var(--ink)',nn?`<i class="news-badge">${nn}</i>`:'')+`<li class="grp" aria-hidden="true">Looks</li>`+nb('overview','Overview','var(--gold)')+items+`<li class="sep" aria-hidden="true"></li><li><button data-nav="inbox" style="--c:var(--muted)" aria-current="${S.active==='inbox'}"><span class="dot"></span><span>Ideas inbox</span><span class="sum">${byChapter('inbox').length||''}</span></button></li><li><button data-nav="summary" style="--c:var(--ink)" aria-current="${S.active==='summary'}"><span class="dot"></span><span>Cost summary</span><span class="sum"></span></button></li>`+`<li class="grp" aria-hidden="true">Planning</li>`+nb('people','Personnel','#8FA3B3',Object.keys(S.people).length||'')+nb('vendors','Vendors','var(--accent)',Object.keys(S.vendors).length||'')+nb('activities','Activities','#C7899B',openT||'')+nb('money','Total costs','#7A2E3A');
+  const inLooks=isLooksPage(S.active);
+  const sub=(id,name,color,sum='')=>`<li class="subnav"><button data-nav="${id}" style="--c:${color}" aria-current="${S.active===id}"><span class="dot"></span><span>${name}</span><span class="sum">${sum}</span></button></li>`;
+  const nLooks=[...S.looks.values()].filter(l=>l.chapter!=='inbox').length;
+  const looksSub=inLooks?sub('overview','Overview','var(--gold)')+CH.map(c=>sub(c.id,c.name,c.color,byChapter(c.id).length||'')).join('')+sub('inbox','Ideas inbox','var(--muted)',byChapter('inbox').length||'')+(HC()?'':sub('summary','Cost summary','var(--ink)')):'';
+  $('#nav').innerHTML=nb('home','Home','var(--ink)',nn?`<i class="news-badge">${nn}</i>`:'')
+    +`<li><button data-nav="${inLooks?'overview':(localStorage.getItem('wl-lastlook')||'overview')}" class="${inLooks?'open':''}" style="--c:var(--gold)" aria-current="false" aria-expanded="${inLooks}"><span class="dot"></span><span>Looks</span><span class="sum">${inLooks?'':(nLooks||'')}</span></button></li>`+looksSub
+    +nb('people','Personnel','#8FA3B3',Object.keys(S.people).length||'')+nb('vendors','Vendors','var(--accent)',Object.keys(S.vendors).length||'')+nb('activities','Activities','#C7899B',openT||'')+(HC()?'':nb('money','Total costs','#7A2E3A'));
+  const FL={home:'Whole plan',people:'Personnel',vendors:'Vendors',activities:'Activities',money:'Total costs'}[S.active]||(CH.find(c=>c.id===S.active)||{}).name||'All looks';
   const foot=`<div class="grand-label">Committed so far</div><div class="grand">${money(committed())}</div>
-    ${presenceHTML()}${syncChip()}${acctHTML()}<button class="btn small" data-pdf="${pdfScope()}" style="margin-top:8px">PDF</button><button class="btn small" data-csv="${csvScope()}" style="margin-top:8px;margin-left:6px">CSV</button>${showInstall()?`<button class="btn small" data-install style="margin-top:8px;margin-left:6px">Install app</button>`:''}
+    ${presenceHTML()}${syncChip()}${acctHTML()}<div class="exp-lbl">Export: ${esc(FL)}</div><button class="btn small" data-pdf="page">PDF</button><button class="btn small" data-csv="page" style="margin-left:6px">CSV</button>${HC()?'':`<label class="nocost"><input type="checkbox" class="nocost-in" ${S.noCosts?'checked':''}>Leave costs out</label>`}${showInstall()?`<button class="btn small" data-install style="margin-top:8px;margin-left:6px">Install app</button>`:''}
     <label class="cur">Currency <select id="curSel" ${S.canWrite?'':'disabled'}>${Object.entries(CURS).map(([k,v])=>`<option value="${k}" ${k===S.currency?'selected':''}>${v}</option>`).join('')}</select></label>`;
   $('#sideFoot').innerHTML=foot;$('#sideFootMobile').innerHTML='';
   const PN={home:['Home','var(--ink)'],people:['Personnel','#8FA3B3'],vendors:['Vendors','var(--accent)'],activities:['Activities','#C7899B'],money:['Total costs','#7A2E3A']};
@@ -919,7 +941,7 @@ function miniCard(l,c,img,idx){return `<button class="pcard" ${img?`data-view="$
       <span class="pimg">${img?`<img ${imgAttr(img)} alt="" loading="lazy">`:'<span class="ph">No picture</span>'}</span>
       <span class="pocc"><i class="dot" style="--c:${c.color}"></i>${c.name}</span>
       <span class="ptitle">${esc(l.title||'Untitled look')}</span>
-      <span class="pmeta">${esc(l.status||'Idea')}${lookTotal(l)?`, ${money(lookTotal(l))}`:''}</span></button>`}
+      <span class="pmeta">${esc(l.status||'Idea')}${lookTotal(l)&&!HC()?`, ${money(lookTotal(l))}`:''}</span></button>`}
 function gresHTML(){
   const q=(S.gq||'').trim();if(!q)return '';
   const res=[...CH,INBOX].flatMap(c=>byChapter(c.id).filter(l=>lookMatches(l,{q})).map(l=>({l,c})));
@@ -967,11 +989,13 @@ function homeHTML(){
     {p:'activities',c:'#C7899B',h:'Activities',n:String(open.length),s:late?`${late} overdue`:'Nothing overdue'},
     {p:'money',c:'#7A2E3A',h:'Total costs',n:money(committed()),s:b?`${money(b-committed())} left of ${money(b)}`:'No budget set yet'}
   ];
-  return `<section class="hero"><h1>Bako &amp; Made</h1><p>Our wedding planner</p>${nextC?`<div class="countdown" style="--c:${nextC.c.color}"><b>${nextC.n===0?'Today':nextC.n}</b><span>${nextC.n===0?`is the ${nextC.c.name}`:`${nextC.n===1?'day':'days'} to the ${nextC.c.name}`}</span></div>`:'<div class="when">No dates set yet. Add them under Looks, Overview.</div>'}</section>
+  const hc=HC();if(hc){tiles.pop();tiles[0].s=`across ${CH.length} ceremonies`;tiles[2].s=`${booked} booked`}
+  const nd=nextC&&(S.chapters[nextC.c.id]||{}).date;
+  return `<section class="hero">${nextC?`<h1>${nextC.n===0?'Today':nextC.n+(nextC.n===1?' day':' days')}</h1><p>${nextC.n===0?'is':'to'} the ${esc(nextC.c.name)}, ${esc(fmtDate(nd))}</p>`:`<h1>Home</h1><p>Set your dates under Looks to start the countdown.</p>`}</section>
   <div class="tiles">${tiles.map(t=>`<button class="tile" data-nav="${t.p}" style="--c:${t.c}"><h3>${t.h}</h3><span class="big-n">${t.n}</span><span class="sub">${t.s}</span></button>`).join('')}</div>
   ${newsHTML()}
   ${upcomingHTML()}
-  <div class="exports home-sec"><span class="lbl">Export the whole plan</span><button class="btn primary" data-pdf="all">Everything as PDF</button><button class="btn" data-csv="all">Everything as CSV</button><label class="nocost" style="margin:0 0 0 6px"><input type="checkbox" id="noCost" ${S.noCosts?'checked':''}>Leave costs out, for sharing</label></div>`;
+  <div class="exports home-sec"><span class="lbl">Export the whole plan</span><button class="btn primary" data-pdf="all">Everything as PDF</button><button class="btn" data-csv="all">Everything as CSV</button>${hc?'':`<label class="nocost" style="margin:0 0 0 6px"><input type="checkbox" id="noCost" ${S.noCosts?'checked':''}>Leave costs out, for sharing</label>`}</div>`;
 }
 /* ---------- Vendors ---------- */
 function vcardHTML(v){
@@ -985,7 +1009,7 @@ function vcardHTML(v){
       <h3>${esc(v.name||'Unnamed vendor')}</h3>
       ${days?`<div class="vdays">${days}</div>`:''}
       ${v.phone||v.link?`<div class="vmeta">${[esc(v.phone),esc(v.link)].filter(Boolean).join('<br>')}</div>`:''}
-      ${vPaid(v)?`<div class="vmeta">Paid ${money(vPaid(v))}${bal>0?', balance '+money(bal):''}</div>`:''}
+      ${vPaid(v)&&!HC()?`<div class="vmeta">Paid ${money(vPaid(v))}${bal>0?', balance '+money(bal):''}</div>`:''}
       <div class="vfoot"><span class="price">${vQuote(v)?money(vQuote(v)):'<span style="color:var(--muted);font-size:15px;font-family:var(--body)">No quote yet</span>'}</span><span class="vs" data-s="${esc(v.status||'Shortlisted')}">${esc(v.status||'Shortlisted')}</span></div>
     </div></button>`;
 }
@@ -998,7 +1022,7 @@ function vendorsHTML(){
   const chips=all.length?`<div class="vfilters"><button data-vfilter="all" aria-pressed="${S.vfilter==='all'}">Everyone ${all.length}</button>${used.map(c=>`<button data-vfilter="${esc(c)}" aria-pressed="${S.vfilter===c}">${esc(c)}</button>`).join('')}</div>`:'';
   const grid=show.length?`<div class="vgrid">${show.map(vcardHTML).join('')}</div>`:`<div class="empty"><p>${all.length?'Nobody in this category yet.':'No vendors yet. Add the first one.'}</p>${S.canWrite?'<button class="btn primary" data-vnewp>Add vendor</button>':''}</div>`;
   return `<header class="head"><div><h1>Vendors</h1><div class="meta">${all.length} ${all.length===1?'vendor':'vendors'}, ${booked} booked</div><p class="note" style="--c:var(--accent)">Quotes, contacts and samples of their work.</p></div><div class="actions">${S.canWrite?'<button class="btn primary" data-vnewp>Add vendor</button>':''}<button class="btn" data-pdf="vendors">PDF</button><button class="btn" data-csv="vendors">CSV</button></div></header>
-  <div class="vhead"><div class="vstat"><span>Quoted</span><b>${money(q)}</b></div><div class="vstat"><span>Paid so far</span><b>${money(p)}</b></div><div class="vstat"><span>Still owing</span><b>${money(Math.max(0,q-p))}</b></div></div>
+  <div class="vhead costbox"><div class="vstat"><span>Quoted</span><b>${money(q)}</b></div><div class="vstat"><span>Paid so far</span><b>${money(p)}</b></div><div class="vstat"><span>Still owing</span><b>${money(Math.max(0,q-p))}</b></div></div>
   ${chips}${grid}`;
 }
 function vendorDrawerHTML(id){
@@ -1020,11 +1044,11 @@ function vendorDrawerHTML(id){
       <div class="field"><label for="v-link" class="flabel">Instagram or website</label><input id="v-link" class="in" data-vf="link" value="${esc(v.link)}" placeholder="@handle" ${dis}></div>
     </div>
     ${v.phone?`<div style="display:flex;gap:6px;margin:-6px 0 14px"><a class="btn small wa" href="https://wa.me/${waNum(v.phone)}" target="_blank" rel="noopener">${WA} WhatsApp</a><a class="btn small" href="tel:${esc(String(v.phone).replace(/[^\d+]/g,''))}">Call</a></div>`:''}
-    <div class="row2">
+    <div class="row2 costbox">
       <div class="field"><label for="v-quote" class="flabel">Their quote</label><input id="v-quote" class="in" data-vf="quote" inputmode="decimal" value="${esc(v.quote)}" placeholder="0" ${dis}></div>
       <div class="field"><label for="v-paid" class="flabel">Paid so far</label><input id="v-paid" class="in" data-vf="paid" inputmode="decimal" value="${esc(v.paid)}" placeholder="0" ${dis}></div>
     </div>
-    <div class="cost-total"><span>Still owing</span><b id="vBal">${money(Math.max(0,vQuote(v)-vPaid(v)))}</b></div>
+    <div class="cost-total costbox"><span>Still owing</span><b id="vBal">${money(Math.max(0,vQuote(v)-vPaid(v)))}</b></div>
     <div class="field" style="margin-top:20px"><label for="v-notes" class="flabel">Notes</label><textarea id="v-notes" class="in" data-vf="notes" rows="3" placeholder="What the quote covers, what was agreed" ${dis}>${esc(v.notes)}</textarea></div>
     ${(()=>{const ls=[...S.looks.entries()].filter(([,l])=>(l.vendors||[]).includes(id));return ls.length?`<div class="field"><span class="flabel">Linked looks</span><div class="chips">${ls.map(([lid,l])=>`<button class="vchip" data-open="${lid}">${esc(l.title||'Untitled look')}</button>`).join('')}</div></div>`:''})()}
     ${S.canWrite?`<div class="dr-foot"><button class="btn small" data-vtask="${id}">Add a follow-up</button><button class="btn small danger" data-vdel>Delete vendor</button></div>`:''}
@@ -1131,27 +1155,27 @@ let pendingVendor=null;
 /* ---------- CSV ---------- */
 const csvCell=v=>{const x=String(v??'');return /[",\n\r]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
 const dayNames=ids=>(ids||[]).map(x=>{const c=CH.find(y=>y.id===x);return c?c.name:x}).join(' / ');
-function buildCSV(scope='all'){
-  const cur=S.currency,rows=[],on=k=>scope==='all'||scope===k,nc=S.noCosts&&scope!=='money';
+function buildCSV(scope='all',onlyCh=null){
+  const cur=S.currency,rows=[],on=k=>scope==='all'||scope===k,nc=noCost()&&scope!=='money';const CHS=onlyCh?CH.filter(c=>c.id===onlyCh):CH;
   rows.push(['Bako & Made, wedding planner'],['Exported',new Date().toISOString().slice(0,10)]);rows.push(nc?['Costs left out']:['Amounts in',cur]);rows.push([]);
   if(!nc&&on('money')){const v=vTotals(),b=num(S.plan.budget);rows.push(['TOTAL COSTS'],['Item','Amount ('+cur+')']);rows.push(['Budget',b||''],['Outfits and looks',Math.round(grandTotal())],['Vendors quoted',Math.round(v.quoted)],['Committed altogether',Math.round(committed())],['Paid to vendors',Math.round(v.paid)],['Still owing vendors',Math.round(Math.max(0,v.quoted-v.paid))]);if(b)rows.push([committed()>b?'Over budget by':'Left to spend',Math.round(Math.abs(b-committed()))]);rows.push([])}
-  if(on('looks')){rows.push(['CEREMONIES'],['Ceremony','Date','Palette','Looks'].concat(nc?[]:['Budget ('+cur+')','Looks total ('+cur+')']));CH.forEach(c=>{const m=S.chapters[c.id]||{};rows.push([c.name,m.date||'',(m.palette||[]).map(p=>p.name?p.name+' '+p.hex:p.hex).join(' / '),byChapter(c.id).length].concat(nc?[]:[m.budget||'',Math.round(chTotal(c.id))]))});rows.push([]);
+  if(on('looks')){rows.push(['CEREMONIES'],['Ceremony','Date','Palette','Looks'].concat(nc?[]:['Budget ('+cur+')','Looks total ('+cur+')']));CHS.forEach(c=>{const m=S.chapters[c.id]||{};rows.push([c.name,m.date||'',(m.palette||[]).map(p=>p.name?p.name+' '+p.hex:p.hex).join(' / '),byChapter(c.id).length].concat(nc?[]:[m.budget||'',Math.round(chTotal(c.id))]))});rows.push([]);
     rows.push(['LOOKS'],['Ceremony','Look','For','Status','Colors','Outfit & fabric','Accessories','Shoes','Hair & makeup','Notes'].concat(nc?[]:['Cost lines','Total ('+cur+')','Still to pay ('+cur+')']));
-    CH.forEach(c=>byChapter(c.id).forEach(l=>rows.push([c.name,l.title||'',l.who||'',l.status||'Idea',(l.colors||[]).join(' / '),l.outfit||'',l.accessories||'',l.shoes||'',l.beauty||'',l.notes||''].concat(nc?[]:[(l.costs||[]).filter(r=>num(r.amount)).map(r=>(r.label||'Item')+' '+Math.round(num(r.amount))).join(' / '),Math.round(lookTotal(l)),Math.round(lookOwed(l))]))));rows.push([])}
+    CHS.forEach(c=>byChapter(c.id).forEach(l=>rows.push([c.name,l.title||'',l.who||'',l.status||'Idea',(l.colors||[]).join(' / '),l.outfit||'',l.accessories||'',l.shoes||'',l.beauty||'',l.notes||''].concat(nc?[]:[(l.costs||[]).filter(r=>num(r.amount)).map(r=>(r.label||'Item')+' '+Math.round(num(r.amount))).join(' / '),Math.round(lookTotal(l)),Math.round(lookOwed(l))]))));rows.push([])}
   if(on('people')){rows.push(['PERSONNEL'],['Name','Role','In charge of','Needed on','Phone','Open tasks','Notes']);pAll().forEach(p=>rows.push([p.name||'',p.role||'',(p.duties||[]).join(' / '),dayNames(p.days),p.phone||'',tasksFor(p.id).filter(t=>t.status!=='Done').map(t=>t.title||'Untitled').join(' / '),p.notes||'']));rows.push([])}
   if(on('vendors')){rows.push(['VENDORS'],['Name','What they do','Status','Days','Phone','Instagram or website'].concat(nc?[]:['Quote ('+cur+')','Paid ('+cur+')','Still owing ('+cur+')']).concat(['Notes']));vAll().forEach(v=>rows.push([v.name||'',vCat(v),v.status||'',dayNames(v.days),v.phone||'',v.link||''].concat(nc?[]:[Math.round(vQuote(v)),Math.round(vPaid(v)),Math.round(Math.max(0,vQuote(v)-vPaid(v)))]).concat([v.notes||''])));rows.push([])}
   if(on('tasks')){rows.push(['ACTIVITIES'],['Task','Status','Due','Who']);tAll().sort((a,b)=>(a.due||'9999')<(b.due||'9999')?-1:1).forEach(t=>rows.push([t.title||'',t.status||'',t.due||'',whoLabel(t.who)]))}
   return rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
 }
 const SCOPENAME={all:'wedding-planner',looks:'wedding-looks',people:'wedding-personnel',vendors:'wedding-vendors',tasks:'wedding-activities',money:'wedding-costs'};
-function exportCSV(scope='all'){const blob=new Blob(['﻿'+buildCSV(scope)],{type:'text/csv;charset=utf-8'});const name=(SCOPENAME[scope]||'wedding-planner')+(S.noCosts&&scope!=='money'?'-no-costs':'')+'.csv';const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('CSV downloaded')}
+function exportCSV(scope='all',onlyCh=null){if(HC()&&scope==='money'){toast('Costs are not available with view-only access.');return}const blob=new Blob(['﻿'+buildCSV(scope,onlyCh)],{type:'text/csv;charset=utf-8'});const name=(onlyCh?(CH.find(c=>c.id===onlyCh).name.replace(/\s+/g,'-')+'-looks'):(SCOPENAME[scope]||'wedding-planner'))+(noCost()&&scope!=='money'?'-no-costs':'')+'.csv';const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();toast('CSV downloaded')}
 function overviewHTML(){
   const dis=S.canWrite?'':'disabled';
   const nextC=CH.map(c=>({c,n:daysUntil((S.chapters[c.id]||{}).date)})).filter(x=>x.n!=null&&x.n>=0).sort((a,b)=>a.n-b.n)[0];
   return `<header class="head"><div><h1>Overview</h1><div class="meta">${[...S.looks.values()].filter(l=>l.chapter!=='inbox').length} looks across ${CH.length} ceremonies</div></div><div class="actions"><button class="btn primary" data-pdf="looks">Export PDF</button><button class="btn" data-csv="looks">Export CSV</button></div></header>
   <section class="ov"><input type="search" id="gq" class="in gsearch" placeholder="Find a look across all ceremonies" value="${esc(S.gq)}" aria-label="Find a look"><div id="gres">${gresHTML()}</div></section>
   <section class="ov"><h2 class="sub-h first">Our palette</h2>${paletteHTML('overview')}</section>
-  <section class="ov"><h2 class="sub-h">Dates</h2><div>${CH.map(c=>{const m=S.chapters[c.id];return `<div class="date-row" style="--c:${c.color}"><span class="dot"></span><button class="link" data-nav="${c.id}">${c.name}</button><input type="date" class="in date-in" data-date="${c.id}" value="${esc(m.date||'')}" aria-label="${c.name} date" ${dis}><span class="mini-pal">${(m.palette||[]).map(p=>`<i class="sw" style="--s:${esc(p.hex)}"></i>`).join('')}</span><span class="amt">${money(chTotal(c.id))}${m.date?`<small class="cd">${cdText(daysUntil(m.date))}</small>`:''}</span></div>`}).join('')}</div></section>
+  <section class="ov"><h2 class="sub-h">Dates</h2><div>${CH.map(c=>{const m=S.chapters[c.id];return `<div class="date-row" style="--c:${c.color}"><span class="dot"></span><button class="link" data-nav="${c.id}">${c.name}</button><input type="date" class="in date-in" data-date="${c.id}" value="${esc(m.date||'')}" aria-label="${c.name} date" ${dis}><span class="mini-pal">${(m.palette||[]).map(p=>`<i class="sw" style="--s:${esc(p.hex)}"></i>`).join('')}</span><span class="amt">${HC()?'':money(chTotal(c.id))}${m.date?`<small class="cd">${cdText(daysUntil(m.date))}</small>`:''}</span></div>`}).join('')}</div></section>
   ${personHTML()}`;
 }
 const INBOX={id:'inbox',name:'Ideas inbox',color:'#A79EA5',note:''};
@@ -1221,11 +1245,11 @@ function renderMain(){
   const cm=S.chapters[c.id]||{};const bud=num(cm.budget);const dn=daysUntil(cm.date);
   const filters=looks.length>1?`<div class="filters"><input type="search" id="fq" class="in" placeholder="Search looks" value="${esc(S.flt.q)}" aria-label="Search looks"><select id="fs" class="in" aria-label="Status"><option value="">Any status</option>${STATUS.map(x=>`<option ${S.flt.status===x?'selected':''}>${x}</option>`).join('')}</select><select id="fp" class="in" aria-label="Person"><option value="">Anyone</option>${TAGS.map(x=>`<option ${S.flt.person===x?'selected':''}>${x}</option>`).join('')}</select><select id="fh" class="in" aria-label="Favorites"><option value="">All looks</option><option value="me" ${S.flt.fav==='me'?'selected':''}>Loved by me</option><option value="both" ${S.flt.fav==='both'?'selected':''}>Loved by both</option></select></div>`:'';
   m.innerHTML=`${banner}<header class="head" style="--c:${c.color}">
-    <div><h1>${c.name}</h1><div class="meta">${looks.length} ${looks.length===1?'look':'looks'}${tot?', '+money(tot):''}${dn!=null?`, <b class="cd">${cdText(dn)}</b>`:''}</div><input class="note note-in" data-tagline="${c.id}" value="${esc(cnote(c.id))}" placeholder="Add a short description" aria-label="Description" maxlength="80"></div>
+    <div><h1>${c.name}</h1><div class="meta">${looks.length} ${looks.length===1?'look':'looks'}${tot&&!HC()?', '+money(tot):''}${dn!=null?`, <b class="cd">${cdText(dn)}</b>`:''}</div><input class="note note-in" data-tagline="${c.id}" value="${esc(cnote(c.id))}" placeholder="Add a short description" aria-label="Description" maxlength="80"></div>
     ${S.canWrite?`<div class="actions"><button class="btn primary" data-add-pics>Add pictures</button><button class="btn" data-add-blank>Blank look</button><button class="btn" data-pdf-ch="${c.id}">PDF</button></div>`:''}
   </header>
   <section class="chmeta"><div class="chmeta-left"><div><h2 class="mini">Date</h2><input type="date" class="in date-in" data-date="${c.id}" value="${esc(cm.date||'')}" aria-label="Date" ${S.canWrite?'':'disabled'}></div>
-    <div><h2 class="mini">Budget</h2><input class="in date-in" data-budget="${c.id}" inputmode="decimal" placeholder="Set a budget" value="${esc(cm.budget||'')}" aria-label="Budget">
+    <div class="costbox"><h2 class="mini">Budget</h2><input class="in date-in" data-budget="${c.id}" inputmode="decimal" placeholder="Set a budget" value="${esc(cm.budget||'')}" aria-label="Budget">
     ${bud?`<div class="budbar${tot>bud?' over':''}"><i style="width:${Math.min(100,tot/bud*100)}%"></i></div><div class="budtxt${tot>bud?' over':''}">${tot>bud?`${money(tot-bud)} over budget`:`${money(bud-tot)} left of ${money(bud)}`}</div>`:''}</div></div>
     <div><h2 class="mini">Palette for this day</h2>${paletteHTML(c.id)}</div></section>
   ${filters}<div id="boardWrap">${boardHTML(c)}</div>
@@ -1276,7 +1300,7 @@ function drawerHTML(id){
       ${S.canWrite?`<button class="btn small" data-addcolor>Add color</button>`:''}
     </div></div>
     ${FIELDS.map(([k,lab])=>`<div class="field"><label for="f-${k}">${lab}</label><textarea id="f-${k}" class="in" data-f="${k}" rows="2" ${dis} placeholder="${{outfit:'Fabric, style',accessories:'Jewelry, bag, cap',shoes:'Style, color',beauty:'Hair, makeup',notes:'Extras'}[k]}">${esc(l[k])}</textarea></div>`).join('')}
-    <div class="field"><span class="flabel">Costs</span><div class="costs">
+    <div class="field costbox"><span class="flabel">Costs</span><div class="costs">
       ${(l.costs||[]).map((r,i)=>`<div class="cost-line"><div class="cost"><input class="in" data-cl="${i}" value="${esc(r.label)}" placeholder="Item" aria-label="Cost item" ${dis}><input class="in" data-ca="${i}" value="${esc(r.amount)}" inputmode="decimal" placeholder="0" aria-label="Amount" ${dis}>${S.canWrite?`<button class="x" data-rmcost="${i}" aria-label="Remove line">×</button>`:'<span></span>'}</div>
         <div class="cost-pay"><div class="seg mini-seg">${[['unpaid','Unpaid'],['deposit','Deposit'],['paid','Paid']].map(([k,lab])=>`<button data-cs="${i}|${k}" aria-pressed="${(r.status||'unpaid')===k}">${lab}</button>`).join('')}</div>${r.status==='deposit'?`<input class="in dep" data-cp="${i}" value="${esc(r.paid||'')}" inputmode="decimal" placeholder="Amount paid" aria-label="Deposit paid">`:''}</div></div>`).join('')}
     </div>${S.canWrite?`<button class="btn small" style="margin-top:10px" data-addcost>Add cost line</button>`:''}
@@ -1432,7 +1456,7 @@ document.addEventListener('click',e=>{
   const v=e.target.closest('[data-view]');if(v){const [lid,ix]=v.dataset.view.split('|');openLightbox(lid,+ix);return}
   const t=e.target.closest('button');if(!t)return;
   const d=t.dataset;
-  if('pdf' in d){exportPDF(t,null,d.pdf||'all');return}
+  if('pdf' in d){if(d.pdf==='page'){const c=CH.find(x=>x.id===S.active);if(c)exportPDF(t,c.id,'looks');else exportPDF(t,null,pdfScope())}else exportPDF(t,null,d.pdf||'all');return}
   if('sync' in d){if(S.sync==='signin')signIn();else if(S.sync==='error')syncNow();return}
   if('share' in d){shareWith(t);return}
   if('copyLink' in d){copyLink();return}
@@ -1450,7 +1474,7 @@ document.addEventListener('click',e=>{
   if(d.open){if(d.goto){setPage(d.goto,true);render()}openDrawer(d.open);return}
   if('close' in d){const wasNew=DR&&DR.isNew,wasDirty=DR&&DR.dirty;closeDrawer();if(wasDirty||wasNew)toast('Saved');return}
   if('cancel' in d){cancelDrawer();return}
-  if(d.csv!==undefined){exportCSV(d.csv||'all');return}
+  if(d.csv!==undefined){exportCSV(d.csv==='page'?csvScope():(d.csv||'all'),d.csv==='page'&&CH.some(x=>x.id===S.active)?S.active:null);return}
   if('rclose' in d){closeR();return}
   if(d.vfilter!==undefined){S.vfilter=d.vfilter;render();return}
   if('vnewp' in d){const nid=rnew('vendor',newVendor());if(nid){render();openR('vendor',nid)}return}
@@ -1551,7 +1575,7 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(R2.kind&&t.closest('#rdrawer')){if(t.dataset.pf)rchange('person',R2.id,p=>{p[t.dataset.pf]=t.value});else if(t.dataset.vf)rchange('vendor',R2.id,v=>{v[t.dataset.vf]=t.value});if(t.tagName==='SELECT'||t.dataset.vf==='phone'||t.dataset.pf==='phone')refreshR();return}
   {const row=t.closest('.trow');if(row&&t.dataset.tf&&t.dataset.tf!=='title'){rchange('task',row.dataset.tid,x=>{x[t.dataset.tf]=t.value});return}if(row&&t.dataset.tf==='title'){render();return}}
-  if(t.id==='noCost'){S.noCosts=t.checked;render();return}
+  if(t.id==='noCost'||t.classList.contains('nocost-in')){S.noCosts=t.checked;try{localStorage.setItem('wl-nocosts',S.noCosts?'1':'0')}catch{}render();toast(S.noCosts?'Exports will leave costs out':'Exports will include costs');return}
   if(t.id==='budgetIn'){const v=num(t.value);changePlan(p=>{p.budget=v});return}
   if(t.id==='fs'||t.id==='fp'||t.id==='fh'){S.flt[{fs:'status',fp:'person',fh:'fav'}[t.id]]=t.value;refreshBoard();return}
   if(t.dataset.moveTo){const id=t.dataset.moveTo,v=t.value;if(v){change(id,l=>{l.chapter=v;l.order=Date.now()});toast('Moved to '+pageName(v))}return}
@@ -1820,7 +1844,7 @@ async function connect(){
     if(!dataId){gate('nofolder');setSync('signin');return}
     localStorage.setItem('wl-folder',folderId);localStorage.setItem('wl-data',dataId);
     try{const cp=await jget(`${API}/files/${dataId}?fields=capabilities(canEdit)`);S.canWrite=!(cp.capabilities&&cp.capabilities.canEdit===false)}catch{}
-    document.body.classList.toggle('readonly',!S.canWrite);
+    document.body.classList.toggle('readonly',!S.canWrite);document.body.classList.toggle('hidecosts',HC());if(HC()&&(S.active==='money'||S.active==='summary'))setPage('home');
     hideGate();await syncNow();startPoll();if(S.canWrite)initPresence();
   }catch(e){if(e.code==='auth'){setSync('signin');gate()}else{setSync('error');toast('Could not reach Google Drive.')}}
 }
@@ -1859,7 +1883,7 @@ function appLink(){return location.origin+location.pathname+(CLIENT_ID?'':'#cid=
 async function copyLink(){try{await navigator.clipboard.writeText(appLink());toast('Link copied')}catch{prompt('Copy this link',appLink())}}
 function shareHTML(){
   return `<section class="ov"><h2 class="sub-h">Sharing</h2>
-  ${dataId&&tokenOk()?`<div class="share-row"><input class="in" id="shareIn" type="email" placeholder="Gmail address" autocomplete="email"><select class="in" id="shareRole" aria-label="Access"><option value="writer">Editor</option><option value="reader">Viewer</option></select><button class="btn" data-share>Share lookbook</button></div><p id="shareMsg" class="share-msg" role="status"></p><ul id="people" class="people"></ul><p><a class="muted" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener">Open folder in Drive</a></p>`:'<p class="muted">Sign in to share the lookbook.</p>'}
+  ${dataId&&tokenOk()?`<div class="share-row"><input class="in" id="shareIn" type="email" placeholder="Gmail address" autocomplete="email"><select class="in" id="shareRole" aria-label="Access"><option value="writer">Editor</option><option value="reader">Viewer</option></select><button class="btn" data-share>Share lookbook</button></div><p class="muted" style="font-size:13px;margin:-4px 0 10px">Editors can change everything. Viewers can browse but never see costs, budgets or payments.</p><p id="shareMsg" class="share-msg" role="status"></p><ul id="people" class="people"></ul><p><a class="muted" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener">Open folder in Drive</a></p>`:'<p class="muted">Sign in to share the lookbook.</p>'}
   <div class="share-row"><button class="btn small" data-copy-link>Copy app link</button></div></section>`;
 }
 
@@ -1896,7 +1920,8 @@ async function loadPdfFonts(doc){
   for(const [k,{f,b64}] of Object.entries(ff)){doc.addFileToVFS(f,b64);doc.addFont(f,k,'normal')}return true;
 }
 async function exportPDF(btn,only,scope='all'){
-  const planOnly=['people','vendors','tasks','money'].includes(scope);const withPlan=scope==='all'||planOnly;const nc=S.noCosts&&scope!=='money';
+  const planOnly=['people','vendors','tasks','money'].includes(scope);const withPlan=scope==='all'||planOnly;const nc=noCost()&&scope!=='money';
+  if(HC()&&scope==='money'){toast('Costs are not available with view-only access.');return}
   if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent='Preparing…';
   try{
     const {jsPDF}=await loadPdfLib();const doc=new jsPDF({unit:'mm',format:'a4'});
@@ -1926,10 +1951,10 @@ async function exportPDF(btn,only,scope='all'){
         dot(M+2,y-2,1.8,c.color);T(c.name,M+8,y,{f:'D',size:17});
         T(m.date?fmtDate(m.date):'Date to be set',M+8,y+5.5,{f:'L',size:8.5,color:C.mut});
         T(`${n} ${n===1?'look':'looks'}`,PW-M-42,y,{f:'L',size:9,color:C.mut,align:'right'});
-        T(pm(chTotal(c.id)),PW-M,y,{f:'R',size:10.5,align:'right'});y+=9;hr(M,PW-M,y)});
+        if(!nc)T(pm(chTotal(c.id)),PW-M,y,{f:'R',size:10.5,align:'right'});y+=9;hr(M,PW-M,y)});
       y+=14;const all=[...S.looks.values()].filter(l=>l.chapter!=='inbox');const paid=all.reduce((a,l)=>a+lookPaid(l),0),owed=all.reduce((a,l)=>a+lookOwed(l),0);
-      caps('Total for all looks',M,y);T(pm(grandTotal()),M,y+11,{f:'D',size:26});
-      if(paid||owed){caps('Paid',PW-M-70,y);T(pm(paid),PW-M-70,y+8,{f:'R',size:11});caps('Still to pay',PW-M-30,y);T(pm(owed),PW-M-30,y+8,{f:'R',size:11})}
+      if(!nc){caps('Total for all looks',M,y);T(pm(grandTotal()),M,y+11,{f:'D',size:26})}
+      if(!nc&&(paid||owed)){caps('Paid',PW-M-70,y);T(pm(paid),PW-M-70,y+8,{f:'R',size:11});caps('Still to pay',PW-M-30,y);T(pm(owed),PW-M-30,y+8,{f:'R',size:11})}
     }
     // ---------- look card (measure or draw) ----------
     const memo=new Map();const memoImg=(id,mode='full')=>{const k=id+mode;if(!memo.has(k))memo.set(k,imgData(id,mode));return memo.get(k)};
@@ -1947,7 +1972,7 @@ async function exportPDF(btn,only,scope='all'){
       if((l.colors||[]).length){yy+=2.5;if(draw)l.colors.slice(0,8).forEach((h,i)=>dot(x+1.8+i*5.2,yy,1.8,h));yy+=3.5}
       for(const [k,lab] of FIELDS){if(!l[k])continue;yy+=3.5;if(draw)caps(lab,x,yy,{size:5.8,color:C.faint});const ls=wrap(l[k],CW,'L',8.6);yy+=1;ls.forEach(ln=>{yy+=3.9;if(draw)T(ln,x,yy,{f:'L',size:8.6})});yy+=.6}
       const t=lookTotal(l);
-      if(t){yy+=4;if(draw)hr(x,x+CW,yy);
+      if(t&&!nc){yy+=4;if(draw)hr(x,x+CW,yy);
         for(const r of (l.costs||[]).filter(r=>num(r.amount))){yy+=4.4;if(draw){T(r.label||'Item',x,yy,{f:'L',size:8,color:C.mut});T(pm(num(r.amount))+(r.status==='paid'?'  paid':r.status==='deposit'?'  deposit':''),x+CW,yy,{f:'L',size:8,color:C.mut,align:'right'})}}
         yy+=5.5;if(draw){caps('Total',x,yy,{size:6.4,color:C.ink});T(pm(t),x+CW,yy,{f:'M',size:10,align:'right'})}}
       return yy+10;
@@ -1965,8 +1990,8 @@ async function exportPDF(btn,only,scope='all'){
       caps(cm.date?fmtDate(cm.date):'Date to be set',M,31,{size:7.5,cs:.55});
       T(c.name,M,46,{f:'D',size:34});
       let y=53;const note=cnote(c.id);if(note){T(wrap(note,PW-2*M-50,'L',10)[0],M,y,{f:'L',size:10,color:C.mut});y+=5}
-      caps('Total',PW-M,31,{size:7,align:'right'});T(pm(chTotal(c.id)),PW-M,40,{f:'R',size:13,align:'right'});
-      if(num(cm.budget)){T(`of ${pm(num(cm.budget))} budget`,PW-M,45,{f:'L',size:7.5,color:C.mut,align:'right'})}
+      if(!nc){caps('Total',PW-M,31,{size:7,align:'right'});T(pm(chTotal(c.id)),PW-M,40,{f:'R',size:13,align:'right'})}
+      if(!nc&&num(cm.budget)){T(`of ${pm(num(cm.budget))} budget`,PW-M,45,{f:'L',size:7.5,color:C.mut,align:'right'})}
       if((cm.palette||[]).length){y+=5;y=palRow(cm.palette,M,y+3,3.4,21)+2}
       y+=4;hr(M,PW-M,y);y+=8;
       const top=y;let col=[top,top];const bottom=PH-16;
@@ -2035,7 +2060,7 @@ async function exportPDF(btn,only,scope='all'){
         footer();
       }
     }
-    const blob=doc.output('blob');const name=planOnly?`Bako-and-Made-${({people:'personnel',vendors:'vendors',tasks:'activities',money:'costs'})[scope]}.pdf`:scope==='all'&&!only?'Bako-and-Made-wedding-planner.pdf':only?`${(CH.find(x=>x.id===only)||{name:only}).name.replace(/\s+/g,'-')}-looks.pdf`:'Bako-and-Made-wedding-looks.pdf';
+    const blob=doc.output('blob');const name=(planOnly?`Bako-and-Made-${({people:'personnel',vendors:'vendors',tasks:'activities',money:'costs'})[scope]}.pdf`:scope==='all'&&!only?'Bako-and-Made-wedding-planner.pdf':only?`${(CH.find(x=>x.id===only)||{name:only}).name.replace(/\s+/g,'-')}-looks.pdf`:'Bako-and-Made-wedding-looks.pdf').replace(/\.pdf$/,nc?'-no-costs.pdf':'.pdf');
     {const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
   }catch(e){console.error(e);toast('PDF export failed. Check your connection.')}
   finally{btn.disabled=false;btn.textContent=old}
@@ -2321,7 +2346,7 @@ function popOverlay(name){const i=OV.lastIndexOf(name);if(i<0)return;OV.splice(i
 /* ---------- Remember the current page ---------- */
 const PAGES=['home','overview','summary','inbox','people','vendors','activities','money',...CH.map(c=>c.id)];
 function setPage(pg,push){
-  if(!PAGES.includes(pg))pg='home';S.active=pg;
+  if(!PAGES.includes(pg)||(HC()&&(pg==='money'||pg==='summary')))pg='home';S.active=pg;if(isLooksPage(pg))try{localStorage.setItem('wl-lastlook',pg)}catch{}
   try{localStorage.setItem('wl-page',pg)}catch{}
   const h='#'+pg;try{if(location.hash!==h){if(push)history.pushState(null,'',h);else history.replaceState(null,'',h)}}catch{}
 }
